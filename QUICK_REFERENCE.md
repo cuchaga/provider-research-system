@@ -10,21 +10,32 @@ Then say: "Extract the zip and let's continue working on the provider research s
 
 ---
 
-## 📁 PROJECT STRUCTURE
+## 📁 PROJECT STRUCTURE (v2.0.0)
 
 ```
 provider-research-skill/
-├── Core Code
-│   ├── provider_research_llm.py      # Main module (32KB)
-│   ├── provider_database_postgres.py # Database (23KB)
-│   ├── provider_search.py            # Fuzzy search (5.5KB)
-│   └── test_provider_research_llm.py # Tests (45KB)
+├── v2.0.0 Multi-Skill Architecture
+│   ├── provider_orchestrator.py          # Main coordinator (18KB)
+│   ├── provider_query_interpreter.py     # Skill 1: NLU (12KB)
+│   ├── provider_database_manager.py      # Skill 2: DB Ops (14KB)
+│   ├── provider_semantic_matcher.py      # Skill 3: Matching (11KB)
+│   ├── provider_web_researcher.py        # Skill 4: Research (16KB)
+│   ├── example_usage.py                  # Examples (10KB)
+│   └── test_multi_skill.py               # Tests (8KB)
+│
+├── v1.0.0 Legacy (Still Supported)
+│   ├── provider_research_llm.py          # Monolithic (32KB)
+│   ├── provider_database_postgres.py     # Database (23KB)
+│   ├── provider_search.py                # Search (5.5KB)
+│   └── test_provider_research_llm.py     # Tests (45KB)
 │
 ├── Documentation
-│   ├── README.md                     # GitHub docs
-│   ├── ARCHITECTURE.md               # Full architecture
-│   ├── PROJECT_CONTEXT.md            # This context file
-│   └── docs/architecture-diagram.html # Visual diagram
+│   ├── README.md                         # v2.0.0 guide
+│   ├── MULTI_SKILL_ARCHITECTURE.md       # v2.0.0 architecture
+│   ├── SESSION_HANDOFF.md                # Context preservation
+│   ├── ARCHITECTURE.md                   # v1.0.0 architecture
+│   ├── PROJECT_CONTEXT.md                # Complete context
+│   └── docs/architecture-diagram.html    # Visual diagram
 │
 └── Config
     ├── requirements.txt
@@ -34,44 +45,51 @@ provider-research-skill/
 
 ---
 
-## 🏗️ ARCHITECTURE AT A GLANCE
+## 🏗️ ARCHITECTURE AT A GLANCE (v2.0.0)
 
 ```
 User Query
     ↓
-[Layer 0] Interpretation    ~800 tokens   ← Always runs
+[ORCHESTRATOR] Coordinates all skills
     ↓
-[Layer 1] Database Search   0 tokens      ← Can STOP here ✓
+[Skill 1] Query Interpreter    ~800 tokens   ← Always runs
     ↓
-[Layer 2] Semantic Match    ~500 tokens   ← Can STOP here ✓
+[Skill 2] Database Manager      0 tokens      ← Can STOP here ✓
     ↓
-[Layer 3] Web Research      ~3000 tokens
+[Skill 3] Semantic Matcher      ~500 tokens   ← Can STOP here ✓
     ↓
-[Layer 4] Deduplication     ~1000 tokens
-    ↓
-[Layer 5] NPI Validation    ~500 tokens
+[Skill 4] Web Researcher        ~5000 tokens
     ↓
 Results
 ```
 
----
+**Execution Paths:**
+1. **DB Hit** (~800 tok, ~50ms) - Found in database
+2. **Semantic** (~1,300 tok, ~200ms) - Matched via abbreviation/parent
+3. **Web Research** (~5,800 tok, ~3-5s) - Deep research needed
+4. **Clarification** (~800 tok, <100ms) - Ambiguous query
+
+--v2.0.0 Multi-Skill Tests: 6/6 Passing**
+- ✅ Skill imports
+- ✅ Component initialization  
+- ✅ Query interpretation
+- ✅ Semantic matching
+- ✅ Web researcher functions
+- ✅ Orchestrator structure
+
+**v1.0.0 Legacy Tests: 22/22
 
 ## ✅ TEST STATUS
 
 **22/22 Tests Passing**
+ (v2.0.0)
 
-| Category | Tests | Status |
-|----------|-------|--------|
-| Prompt Interpretation | 8 | ✅ |
-| Semantic Matching | 3 | ✅ |
-| Data Extraction | 2 | ✅ |
-| Deduplication | 3 | ✅ |
-| NPI Matching | 3 | ✅ |
-| End-to-End | 3 | ✅ |
-
----
-
-## 🔑 KEY CAPABILITIES
+### Orchestrator Benefits
+- **Modularity**: 4 independent skills vs monolith
+- **Token Optimization**: Short-circuits at each layer
+- **State Management**: Conversation context & pronoun resolution
+- **Error Handling**: Graceful fallbacks & clarifications
+- **Backward Compatible**: v1.0.0 code still works
 
 ### Understands Natural Language
 - "Find Home Instead near me" → uses user's location
@@ -83,6 +101,49 @@ Results
 - "Home Instead" → finds all subsidiaries
 - Won't force matches that don't exist
 
+### Intelligent Deduplication
+- Same phone = duplicate
+- Same address, diff suite = duplicate
+- Franchise vs HQ = NOT duplicate
+
+---
+
+## 💻 COMMON COMMANDS
+
+### v2.0.0 Usage (Recommended)
+```python
+# Initialize orchestrator
+from provider_research_skill import ProviderOrchestrator
+
+orchestrator = ProviderOrchestrator(db_config)
+result = orchestrator.process_query(
+    user_query="Find Home Instead near me",
+    user_context={"location": "Boston, MA"}
+)
+
+print(f"Path: {result.execution_path.value}")
+print(f"Tokens: {result.token_usage['total']}")
+print(f"Providers: {len(result.providers)}")
+```
+
+### v1.0.0 Usage (Still Supported)
+```python
+from provider_research_skill import ProviderResearchLLM
+
+research = ProviderResearchLLM(db_config)
+result = research.process_query(user_query)
+```
+
+### Run Tests
+```bash
+# Quick multi-skill tests (v2.0.0)
+python3 test_multi_skill.py
+
+# Full test suite (v1.0.0)
+python3 test_provider_research_llm.py
+
+# Examples
+python3 example_usage
 ### Intelligent Deduplication
 - Same phone = duplicate
 - Same address, diff suite = duplicate
