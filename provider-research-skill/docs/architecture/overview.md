@@ -37,12 +37,14 @@ Research, validate, and manage healthcare provider data using a multi-layer inte
 
 | Module | File | Purpose |
 |--------|------|---------|
-| **ProviderResearchLLM** | `provider_research_llm.py` | Main orchestrator with LLM layers |
-| **ProviderDatabasePostgres** | `provider_database_postgres.py` | Database operations |
-| **FuzzySearch** | `provider_search.py` | Rule-based string matching || **ProviderWebResearcher** | `provider_web_researcher.py` | Web scraping and data extraction |
-| **ProviderOrchestrator** | `provider_orchestrator.py` | Query routing and coordination |
-| **ProviderQueryInterpreter** | `provider_query_interpreter.py` | Intent parsing and validation |
-| **ProviderSemanticMatcher** | `provider_semantic_matcher.py` | Semantic search and matching |
+| **ProviderResearchLLM** | `core/research_llm.py` | Legacy v1.0 orchestrator with LLM layers |
+| **ProviderOrchestrator** | `core/orchestrator.py` | v2.0 query routing and coordination |
+| **ProviderQueryInterpreter** | `core/query_interpreter.py` | Intent parsing and validation |
+| **ProviderSemanticMatcher** | `core/semantic_matcher.py` | Semantic search and matching |
+| **ProviderDatabaseManager** | `database/manager.py` | Database operations (v2.0) |
+| **ProviderDatabasePostgres** | `database/postgres.py` | PostgreSQL backend (v1.0) |
+| **ProviderWebResearcher** | `search/web_researcher.py` | Web scraping and data extraction |
+| **FuzzySearch** | `search/provider_search.py` | Rule-based string matching |
 
 ### 2.4 Standalone Utilities
 

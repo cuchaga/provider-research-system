@@ -42,26 +42,26 @@
 
 **Refactored monolithic system into 4 specialized skills + orchestrator:**
 
-1. **Skill 1: Provider Query Interpreter** (`provider_query_interpreter.py`)
+1. **Skill 1: Provider Query Interpreter** (`core/query_interpreter.py`)
    - Natural language understanding & intent classification
    - Pronoun resolution, entity extraction
-   - ~330 lines, ~800 tokens
+   - ~354 lines, ~800 tokens
 
-2. **Skill 2: Provider Database Manager** (`provider_database_manager.py`)
+2. **Skill 2: Provider Database Manager** (`database/manager.py`)
    - Fast rule-based search (exact, fuzzy, full-text)
    - CRUD operations, zero token cost
-   - ~400 lines
+   - ~680 lines
 
-3. **Skill 3: Provider Semantic Matcher** (`provider_semantic_matcher.py`)
+3. **Skill 3: Provider Semantic Matcher** (`core/semantic_matcher.py`)
    - Abbreviation expansion (CK → Comfort Keepers)
    - Parent/subsidiary matching
-   - ~350 lines, ~500 tokens
+   - ~327 lines, ~500 tokens
 
-4. **Skill 4: Provider Web Researcher** (`provider_web_researcher.py`)
+4. **Skill 4: Provider Web Researcher** (`search/web_researcher.py`)
    - Web search, data extraction, deduplication, NPI validation
-   - ~500 lines, ~5K tokens
+   - ~710 lines, ~5K tokens
 
-5. **Orchestrator** (`provider_orchestrator.py`)
+5. **Orchestrator** (`core/orchestrator.py`)
    - Coordinates all 4 skills
    - Manages conversation state & context
    - Token optimization via short-circuiting
@@ -116,11 +116,11 @@
 8. **`provider-research-skill/examples/`** - Working code examples
 
 ### If Working on Specific Skills:
-- `provider_orchestrator.py` - Main coordinator
-- `provider_query_interpreter.py` - NLU skill
-- `provider_database_manager.py` - Database skill
-- `provider_semantic_matcher.py` - Matching skill
-- `provider_web_researcher.py` - Research skill
+- `provider_research/core/orchestrator.py` - Main coordinator
+- `provider_research/core/query_interpreter.py` - NLU skill
+- `provider_research/database/manager.py` - Database skill
+- `provider_research/core/semantic_matcher.py` - Matching skill
+- `provider_research/search/web_researcher.py` - Research skill
 
 ---
 

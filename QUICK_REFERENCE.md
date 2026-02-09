@@ -25,13 +25,26 @@
 ```
 provider-research-skill/
 ├── v2.0.0 Multi-Skill Architecture
-│   ├── provider_orchestrator.py          # Main coordinator (18KB)
-│   ├── provider_query_interpreter.py     # Skill 1: NLU (12KB)
-│   ├── provider_database_manager.py      # Skill 2: DB Ops (14KB)
-│   ├── provider_semantic_matcher.py      # Skill 3: Matching (11KB)
-│   ├── provider_web_researcher.py        # Skill 4: Research (16KB)
-│   ├── example_usage.py                  # Examples (10KB)
-│   └── test_multi_skill.py               # Tests (8KB)
+│   ├── provider_research/
+│   │   ├── core/
+│   │   │   ├── orchestrator.py           # Main coordinator (22KB, 618 lines)
+│   │   │   ├── query_interpreter.py      # Skill 1: NLU (12KB, 354 lines)
+│   │   │   ├── semantic_matcher.py       # Skill 3: Matching (12KB, 327 lines)
+│   │   │   └── research_llm.py           # Legacy v1.0 (32KB)
+│   │   ├── database/
+│   │   │   ├── manager.py                # Skill 2: DB Ops (22KB, 680 lines)
+│   │   │   ├── postgres.py               # PostgreSQL backend
+│   │   │   └── sqlite.py                 # SQLite backend
+│   │   ├── search/
+│   │   │   ├── web_researcher.py         # Skill 4: Research (23KB, 710 lines)
+│   │   │   └── provider_search.py        # Search utilities
+│   │   └── utils/                        # Validators, formatters, logger
+│   ├── examples/
+│   │   ├── basic_usage.py
+│   │   └── advanced_orchestration.py
+│   └── tests/
+│       ├── test_validation.py
+│       └── test_file_and_import_integrity.py
 │
 ├── v1.0.0 Legacy (Still Supported)
 │   ├── provider_research_llm.py          # Monolithic (32KB)
@@ -146,14 +159,17 @@ result = research.process_query(user_query)
 
 ### Run Tests
 ```bash
-# Quick multi-skill tests (v2.0.0)
-python3 test_multi_skill.py
+# Quick validation tests (v2.0.0)
+pytest tests/test_validation.py -v
 
-# Full test suite (v1.0.0)
-python3 test_provider_research_llm.py
+# Comprehensive tests
+pytest tests/ -v --cov=provider_research
 
 # Examples
-python3 example_usage
+python3 examples/basic_usage.py
+python3 examples/advanced_orchestration.py
+```
+
 ### Intelligent Deduplication
 - Same phone = duplicate
 - Same address, diff suite = duplicate

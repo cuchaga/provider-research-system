@@ -105,15 +105,31 @@ Layer 5: NPI Validation           (~500 tokens)   - Registry + LLM matching
 ## FILE INVENTORY
 
 ### Core Python Modules (v2.0.0 - Multi-Skill Architecture)
+
+**Main Package Structure:**
+```
+provider_research/
+├── core/
+│   ├── orchestrator.py           # 22KB, 618 lines - Main coordinator
+│   ├── query_interpreter.py      # 12KB, 354 lines - Skill 1: NLU
+│   ├── semantic_matcher.py       # 12KB, 327 lines - Skill 3: Matching
+│   └── research_llm.py           # 32KB - Legacy v1.0
+├── database/
+│   ├── manager.py                # 22KB, 680 lines - Skill 2: Database ops
+│   ├── postgres.py               # PostgreSQL backend
+│   └── sqlite.py                 # SQLite backend
+└── search/
+    ├── web_researcher.py         # 23KB, 710 lines - Skill 4: Research
+    └── provider_search.py        # Search utilities
+```
+
+**Examples & Tests:**
 | File | Size | Purpose |
 |------|------|---------|
-| `provider_orchestrator.py` | 18KB | Main orchestrator - coordinates all skills |
-| `provider_query_interpreter.py` | 12KB | Skill 1 - Natural language understanding |
-| `provider_database_manager.py` | 14KB | Skill 2 - Fast database operations |
-| `provider_semantic_matcher.py` | 11KB | Skill 3 - Intelligent matching |
-| `provider_web_researcher.py` | 16KB | Skill 4 - Web research & extraction |
-| `example_usage.py` | 10KB | Comprehensive usage examples (v2.0.0) |
-| `test_multi_skill.py` | 8KB | Quick validation tests (6/6 passing) |
+| `examples/basic_usage.py` | 5KB | Basic usage examples |
+| `examples/advanced_orchestration.py` | 6KB | Advanced multi-step workflows |
+| `tests/test_validation.py` | 8KB | Quick validation tests (9/9 passing) |
+| `tests/test_file_and_import_integrity.py` | 15KB | Comprehensive integrity tests |
 
 ### Legacy Python Modules (v1.0.0 - Still Supported)
 | File | Size | Purpose |
@@ -377,31 +393,31 @@ bash scripts/init_database.sh
 **Implemented complete architectural refactoring** from monolithic system to modular skills-based approach:
 
 #### New Components Created
-1. **`provider_orchestrator.py` (18KB, 600 lines)**
+1. **`core/orchestrator.py` (22KB, 618 lines)**
    - Central coordinator for all 4 skills
    - State management & conversation context
    - Smart execution path routing (DB Hit, Semantic, Web Research, Clarification)
    - Token optimization via short-circuiting
 
-2. **`provider_query_interpreter.py` (12KB, 330 lines)** - Skill 1
+2. **`core/query_interpreter.py` (12KB, 354 lines)** - Skill 1
    - Natural language understanding & intent classification
    - Pronoun resolution ("their", "that", "it")
    - "Near me" location handling
    - Simulation mode for testing without API
 
-3. **`provider_database_manager.py` (14KB, 400 lines)** - Skill 2
+3. **`database/manager.py` (22KB, 680 lines)** - Skill 2
    - Fast rule-based search (exact, fuzzy, full-text)
    - Lazy psycopg2 import for optional PostgreSQL
    - CRUD operations
    - Zero token cost
 
-4. **`provider_semantic_matcher.py` (11KB, 350 lines)** - Skill 3
+4. **`core/semantic_matcher.py` (12KB, 327 lines)** - Skill 3
    - Abbreviation expansion (CK → Comfort Keepers, VA → Visiting Angels)
    - Parent/subsidiary matching
    - DBA name resolution
    - Rule-based + LLM fallback
 
-5. **`provider_web_researcher.py` (16KB, 500 lines)** - Skill 4
+5. **`search/web_researcher.py` (23KB, 710 lines)** - Skill 4
    - Web search & data extraction
    - Location extraction from text
    - Duplicate detection with rule-based logic

@@ -4,6 +4,12 @@
 
 The Provider Research System has been refactored from a monolithic design into a **modular multi-skill architecture** with a central orchestrator. This document explains the architecture, benefits, and usage patterns.
 
+> **📦 Import Note:** All skills are organized in the `provider_research` package with submodules (`core/`, `database/`, `search/`). Import using:
+> ```python
+> from provider_research import ProviderOrchestrator, ProviderQueryInterpreter, ...
+> ```
+> This is the recommended way. Direct file imports are internal implementation details.
+
 ## Architecture Diagram
 
 ```
@@ -35,7 +41,7 @@ The Provider Research System has been refactored from a monolithic design into a
 ## Skills Breakdown
 
 ### Skill 1: Provider Query Interpreter
-**File:** `provider_query_interpreter.py`
+**File:** `provider_research/core/query_interpreter.py`
 
 **Purpose:** Natural language understanding and intent classification
 
@@ -51,7 +57,7 @@ The Provider Research System has been refactored from a monolithic design into a
 
 **Example:**
 ```python
-from provider_query_interpreter import ProviderQueryInterpreter
+from provider_research import ProviderQueryInterpreter
 
 interpreter = ProviderQueryInterpreter()
 parsed = interpreter.interpret(
@@ -66,7 +72,7 @@ parsed = interpreter.interpret(
 ---
 
 ### Skill 2: Provider Database Manager
-**File:** `provider_database_manager.py`
+**File:** `provider_research/database/manager.py`
 
 **Purpose:** Fast, rule-based database operations
 
@@ -83,7 +89,7 @@ parsed = interpreter.interpret(
 
 **Example:**
 ```python
-from provider_database_manager import ProviderDatabaseManager
+from provider_research import ProviderDatabaseManager
 
 db = ProviderDatabaseManager(db_config)
 results = db.search(
@@ -98,7 +104,7 @@ results = db.search(
 ---
 
 ### Skill 3: Provider Semantic Matcher
-**File:** `provider_semantic_matcher.py`
+**File:** `provider_research/core/semantic_matcher.py`
 
 **Purpose:** Intelligent matching beyond exact strings
 
@@ -113,7 +119,7 @@ results = db.search(
 
 **Example:**
 ```python
-from provider_semantic_matcher import ProviderSemanticMatcher
+from provider_research import ProviderSemanticMatcher
 
 matcher = ProviderSemanticMatcher()
 matches = matcher.match(
@@ -128,7 +134,7 @@ matches = matcher.match(
 ---
 
 ### Skill 4: Provider Web Researcher
-**File:** `provider_web_researcher.py`
+**File:** `provider_research/search/web_researcher.py`
 
 **Purpose:** Deep web research with data extraction and validation
 
@@ -143,7 +149,7 @@ matches = matcher.match(
 
 **Example:**
 ```python
-from provider_web_researcher import ProviderWebResearcher
+from provider_research import ProviderWebResearcher
 
 researcher = ProviderWebResearcher()
 result = researcher.research(
@@ -157,7 +163,7 @@ result = researcher.research(
 
 ## Orchestrator
 
-**File:** `provider_orchestrator.py`
+**File:** `provider_research/core/orchestrator.py`
 
 **Purpose:** Coordinate all skills and manage workflow
 
@@ -170,7 +176,7 @@ result = researcher.research(
 
 **Usage:**
 ```python
-from provider_orchestrator import ProviderOrchestrator
+from provider_research import ProviderOrchestrator
 
 orchestrator = ProviderOrchestrator(db_config, llm_client)
 
@@ -437,16 +443,31 @@ if result.clarification_question:
 
 ## File Reference
 
+## Project Structure
+
 ```
 provider-research-skill/
-├── provider_orchestrator.py          # Main orchestrator
-├── provider_query_interpreter.py     # Skill 1
-├── provider_database_manager.py      # Skill 2
-├── provider_semantic_matcher.py      # Skill 3
-├── provider_web_researcher.py        # Skill 4
-├── example_usage.py                  # Usage examples
-├── __init__.py                       # Package exports
-└── [legacy files...]                 # Backward compatibility
+├── provider_research/                # Main package
+│   ├── core/
+│   │   ├── orchestrator.py           # Main coordinator
+│   │   ├── query_interpreter.py      # Skill 1
+│   │   ├── semantic_matcher.py       # Skill 3
+│   │   └── research_llm.py           # Legacy v1.0
+│   ├── database/
+│   │   ├── manager.py                # Skill 2
+│   │   ├── postgres.py               # PostgreSQL backend
+│   │   └── sqlite.py                 # SQLite backend
+│   ├── search/
+│   │   ├── web_researcher.py         # Skill 4
+│   │   └── provider_search.py        # Search utilities
+│   └── utils/                        # Formatters, validators, logger
+├── examples/
+│   ├── basic_usage.py
+│   └── advanced_orchestration.py
+├── tests/
+│   ├── test_validation.py
+│   └── test_file_and_import_integrity.py
+└── docs/architecture/v2-multi-skill.md
 ```
 
 ---
@@ -461,7 +482,9 @@ provider-research-skill/
 ## Support
 
 For questions or issues with the multi-skill architecture:
-1. Review `example_usage.py` for patterns
+1. Review `examples/basic_usage.py` for patterns
+2. Review `examples/advanced_orchestration.py` for complex workflows
+3. Check tests in `tests/` directory
 2. Check individual skill documentation
 3. Test with orchestrator in simulation mode (no LLM)
 4. Enable verbose logging for debugging

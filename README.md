@@ -89,11 +89,22 @@ result = research.process_query("Find Home Instead in MA")
 
 ## 📦 The 4 Skills
 
+> **Import Note:** All components are available from the main `provider_research` package:
+> ```python
+> from provider_research import (
+>     ProviderOrchestrator,
+>     ProviderQueryInterpreter,
+>     ProviderDatabaseManager,
+>     ProviderSemanticMatcher,
+>     ProviderWebResearcher
+> )
+> ```
+
 ### Skill 1: Provider Query Interpreter
-**File:** `provider_query_interpreter.py`
+**File:** `provider_research/core/query_interpreter.py`
 
 ```python
-from provider_query_interpreter import ProviderQueryInterpreter
+from provider_research import ProviderQueryInterpreter
 
 interpreter = ProviderQueryInterpreter()
 parsed = interpreter.interpret(
@@ -115,10 +126,10 @@ parsed = interpreter.interpret(
 ---
 
 ### Skill 2: Provider Database Manager
-**File:** `provider_database_manager.py`
+**File:** `provider_research/database/manager.py`
 
 ```python
-from provider_database_manager import ProviderDatabaseManager
+from provider_research import ProviderDatabaseManager
 
 db = ProviderDatabaseManager(db_config)
 results = db.search(
@@ -141,10 +152,10 @@ results = db.search(
 ---
 
 ### Skill 3: Provider Semantic Matcher
-**File:** `provider_semantic_matcher.py`
+**File:** `provider_research/core/semantic_matcher.py`
 
 ```python
-from provider_semantic_matcher import ProviderSemanticMatcher
+from provider_research import ProviderSemanticMatcher
 
 matcher = ProviderSemanticMatcher()
 matches = matcher.match(
@@ -166,7 +177,7 @@ matches = matcher.match(
 ---
 
 ### Skill 4: Provider Web Researcher
-**File:** `provider_web_researcher.py`
+**File:** `provider_research/search/web_researcher.py`
 
 ```python
 from provider_web_researcher import ProviderWebResearcher
@@ -221,20 +232,20 @@ Interpreter → STOP (ask user)
 
 ## 📊 Examples
 
-See [`example_usage.py`](provider-research-skill/example_usage.py) for complete examples:
+See [`examples/`](provider-research-skill/examples/) for complete examples:
 
 ```bash
 cd provider-research-skill
-python3 example_usage.py
+python3 examples/basic_usage.py
+python3 examples/advanced_orchestration.py
 ```
 
 **Examples include:**
 1. Basic search workflow
 2. Multi-turn conversation with pronoun resolution
 3. Different execution paths demonstration
-4. Add provider to database
-5. Compare multiple providers
-6. View orchestrator statistics
+4. Custom workflow configurations
+5. Multi-step query handling
 
 ---
 
@@ -243,20 +254,20 @@ python3 example_usage.py
 ### Quick Test
 ```bash
 cd provider-research-skill
-python3 test_multi_skill.py
+pytest tests/test_validation.py -v
 ```
 
 **Tests:**
-- ✅ Skill imports
+- ✅ Package imports
 - ✅ Component initialization
 - ✅ Query interpretation
+- ✅ Database operations
 - ✅ Semantic matching
-- ✅ Web researcher functions
-- ✅ Orchestrator structure
+- ✅ Configuration management
 
-### Full Test Suite (v1.0.0)
+### Comprehensive Test Suite
 ```bash
-python3 test_provider_research_llm.py
+pytest tests/ -v --cov=provider_research
 ```
 22/22 tests for LLM-enhanced features
 
@@ -270,19 +281,23 @@ provider-research-system/
 ├── QUICK_REFERENCE.md                # Quick reference guide
 ├── SESSION_HANDOFF.md                # Session handoff notes
 ├── provider-research-skill/
+│   ├── provider_research/               # Main package
+│   │   ├── core/
+│   │   │   ├── orchestrator.py          # Main coordinator (22KB, 618 lines)
+│   │   │   ├── query_interpreter.py     # Skill 1 (12KB, 354 lines)
+│   │   │   ├── semantic_matcher.py      # Skill 3 (12KB, 327 lines)
+│   │   │   └── research_llm.py          # Legacy v1.0 (32KB)
+│   │   ├── database/
+│   │   │   ├── manager.py               # Skill 2 (22KB, 680 lines)
+│   │   │   ├── postgres.py              # PostgreSQL backend
+│   │   │   └── sqlite.py                # SQLite backend
+│   │   ├── search/
+│   │   │   ├── web_researcher.py        # Skill 4 (23KB, 710 lines)
+│   │   │   └── provider_search.py       # Search utilities
+│   │   └── utils/                       # Utilities
 │   ├── docs/architecture/v2-multi-skill.md  # Multi-skill architecture
-│   ├── provider_orchestrator.py          # Main orchestrator
-│   ├── provider_query_interpreter.py     # Skill 1
-│   ├── provider_database_manager.py      # Skill 2
-│   ├── provider_semantic_matcher.py      # Skill 3
-│   ├── provider_web_researcher.py        # Skill 4
-│   ├── example_usage.py                  # Usage examples
-│   ├── test_multi_skill.py               # Quick tests
-│   ├── __init__.py                       # Package exports (v2.0.0)
-│   │
-│   ├── [Legacy v1.0.0 Files]
-│   ├── provider_research_llm.py          # Monolithic module
-│   ├── provider_database_postgres.py     # PostgreSQL ops
+│   ├── examples/                        # Usage examples
+│   ├── tests/                           # Test suite
 │   ├── provider_search.py                # Fuzzy search
 │   └── test_provider_research_llm.py     # Full test suite
 │   │
