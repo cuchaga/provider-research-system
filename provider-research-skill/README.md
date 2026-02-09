@@ -233,8 +233,7 @@ python3 test_provider_research_llm.py
 ```
 provider-research-skill/
 ├── README.md                        # This file
-├── SKILL.md                         # Claude skill instructions
-├── SKILL_LLM.md                     # LLM layer documentation
+├── SKILL.md                         # Claude skill instructions (LLM-enhanced)
 ├── ORCHESTRATION.md                 # Workflow orchestration guide
 ├── TEST_CASES.md                    # Detailed test specifications
 ├── requirements.txt                 # Python dependencies

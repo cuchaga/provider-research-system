@@ -57,8 +57,7 @@ Layer 5: NPI Validation           (~500 tokens)   - Registry + LLM matching
 |------|------|---------|
 | `README.md` | 12KB | GitHub-ready documentation |
 | `ARCHITECTURE.md` | 18KB | Complete architecture specification |
-| `SKILL.md` | 16KB | Claude skill instructions |
-| `SKILL_LLM.md` | 14KB | LLM layer documentation |
+| `SKILL.md` | 16KB | Claude skill instructions (LLM-enhanced) |
 | `ORCHESTRATION.md` | 29KB | Workflow orchestration guide |
 | `TEST_CASES.md` | 19KB | Detailed test specifications |
 

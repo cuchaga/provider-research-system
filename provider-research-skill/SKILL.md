@@ -1,7 +1,13 @@
-# Provider Location Research Skill
+# Provider Research Skill - LLM Enhanced
 
-## Purpose
-Systematically research and catalog healthcare provider locations by state with accurate counting, deduplication, and verification to prevent incomplete or incorrect location counts.
+## Overview
+
+A comprehensive healthcare provider research system with intelligent LLM layers for:
+- **Prompt interpretation** - Understands natural language queries, resolves references
+- **Semantic matching** - Finds providers beyond simple string matching
+- **Data extraction** - Extracts structured data from unstructured web content
+- **Smart deduplication** - Handles edge cases in duplicate detection
+- **NPI matching** - Intelligently matches providers to NPI registry records
 
 ## When to Use This Skill
 - User requests: "Find all [Provider] locations in [State]"
@@ -10,152 +16,193 @@ Systematically research and catalog healthcare provider locations by state with 
 - Comparing provider coverage across regions
 - Any task involving counting or cataloging multiple locations
 
-## Critical Prevention Rule: NEVER Start Research Without Verified Count
-
-**STOP and verify count BEFORE beginning detailed research on individual locations.**
-
-The most common error is starting research with an incomplete location count, wasting tokens on partial datasets. This skill prevents the "14 vs 21" problem by requiring count verification first.
-
 ---
 
-## The 4-Phase Workflow
+## Architecture
 
-### Phase 1: Initial Count Verification (MANDATORY)
-**Goal:** Establish accurate target count BEFORE researching individual locations.
-
-**Steps:**
-1. **Extract claimed count from provider website**
-   - Search: `"[Provider]" "[State]" "showing * locations"`
-   - Look for phrases: "showing X locations", "X offices in [State]", "serving X communities"
-   - Example: "Home Instead has 21 locations in New York"
-
-2. **Use web_search to find location directory page**
-   - Search: `"[Provider]" "[State]" locations directory`
-   - Identify the main locations listing page URL
-
-3. **Verify count matches claimed number**
-   - If web_search returns fewer results than claimed → Use web_fetch to get complete HTML
-   - If count mismatch > 10% → STOP and investigate before proceeding
-
-**Quality Gate:** Do NOT proceed to Phase 2 until you have confidence in the total count.
-
----
-
-### Phase 2: Structured Data Extraction
-**Goal:** Extract ALL location data systematically using code, not manual parsing.
-
-**Why code extraction:**
-- Prevents human parsing errors
-- Handles large datasets efficiently
-- Makes duplicates visible immediately
-- Creates audit trail
-
-**Implementation:**
-```python
-from bs4 import BeautifulSoup
-import re
-
-def extract_locations(html_content):
-    """
-    Extract locations from provider website HTML
-    Returns list of dicts with franchise_id, name, phone, address
-    """
-    soup = BeautifulSoup(html_content, 'html.parser')
-    locations = []
-    
-    # Find all location entries (adjust selector based on site structure)
-    location_divs = soup.find_all('div', class_='location-card')
-    
-    for div in location_divs:
-        location = {
-            'franchise_id': extract_franchise_id(div),
-            'name': extract_name(div),
-            'phone': extract_phone(div),
-            'address': extract_address(div)
-        }
-        locations.append(location)
-    
-    return locations
-
-def extract_franchise_id(div):
-    """Extract franchise/location ID from various patterns"""
-    # Check for explicit ID
-    if id_elem := div.find(id=re.compile(r'franchise|location')):
-        return id_elem.text.strip()
-    
-    # Check for data attributes
-    if 'data-franchise-id' in div.attrs:
-        return div['data-franchise-id']
-    
-    # Extract from URL
-    if link := div.find('a', href=True):
-        match = re.search(r'/(\d+)/?$', link['href'])
-        if match:
-            return match.group(1)
-    
-    return None
-
-def extract_phone(div):
-    """Extract phone number"""
-    if phone := div.find('a', href=re.compile(r'^tel:')):
-        return phone.text.strip()
-    
-    if phone := div.find(class_=re.compile(r'phone|tel|contact')):
-        return phone.text.strip()
-    
-    return None
-
-def extract_address(div):
-    """Extract full address"""
-    if addr := div.find(class_=re.compile(r'address|location')):
-        return addr.text.strip()
-    
-    return None
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           USER QUERY                                         │
+│         "Find healthcare providers at the GCP REIT properties"               │
+└────────────────────────────────┬────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 0: LLM PROMPT INTERPRETATION (~800 tokens)                            │
+│                                                                              │
+│  • Understands user intent (search, add, compare, list, research)           │
+│  • Resolves pronouns: "this", "that", "they" → actual entities              │
+│  • Extracts entities: provider names, locations, addresses                  │
+│  • Creates multi-step execution plan for complex queries                    │
+│  • Asks for clarification when query is ambiguous                           │
+│                                                                              │
+│  Example transformations:                                                    │
+│  • "Find them near me" → "Find [last provider] in [user location]"          │
+│  • "Add that to the database" → "Add [last result] to database"             │
+│  • "What about New York?" → "Search [same provider] in NY"                  │
+└────────────────────────────────┬────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 1: DATABASE SEARCH (0 tokens - rule-based)                            │
+│                                                                              │
+│  • Exact SQL match on name, NPI, phone                                      │
+│  • Levenshtein fuzzy match > 80%                                            │
+│  • Full-text search on PostgreSQL                                           │
+│  • Returns immediately if high-confidence match found                       │
+└────────────────────────────────┬────────────────────────────────────────────┘
+                                 │
+                      Found?     │
+                 ┌───────────────┼───────────────┐
+                 │ YES           │               │ NO / LOW CONFIDENCE
+                 ▼               │               ▼
+            ┌────────┐           │    ┌──────────────────────────────────────┐
+            │ RETURN │           │    │  LAYER 2: SEMANTIC MATCHING          │
+            │ RESULT │           │    │  (~500 tokens)                       │
+            └────────┘           │    │                                      │
+                                 │    │  • Abbreviation expansion            │
+                                 │    │    (CK → Comfort Keepers)            │
+                                 │    │  • Parent/subsidiary matching        │
+                                 │    │  • DBA name resolution               │
+                                 │    │  • Regional variation handling       │
+                                 │    └─────────────┬────────────────────────┘
+                                 │                  │
+                                 │       Found?     │
+                                 │    ┌─────────────┼─────────────┐
+                                 │    │ YES         │             │ NO
+                                 │    ▼             │             ▼
+                                 │ ┌────────┐       │    ┌────────────────────┐
+                                 │ │ RETURN │       │    │  LAYER 3: WEB      │
+                                 │ │ RESULT │       │    │  RESEARCH          │
+                                 │ └────────┘       │    │  (~5,000+ tokens)  │
+                                 │                  │    │                    │
+                                 │                  │    │  • Web search      │
+                                 │                  │    │  • LLM extraction  │
+                                 │                  │    │  • Deduplication   │
+                                 │                  │    │  • NPI matching    │
+                                 │                  │    └────────────────────┘
+                                 │                  │
+                                 └──────────────────┘
 ```
 
-**Quality Gate:** Extracted count must match claimed count (±10%).
+---
+
+## Layer Details
+
+### Layer 0: Prompt Interpretation
+
+**Purpose:** Transform natural language into structured execution plan.
+
+**Handles:**
+| User Says | Interpretation |
+|-----------|---------------|
+| "Find GCP REIT at that Michigan address" | {provider: "GCP REIT IV", address: "4200 W Utica Rd, MI 48317"} |
+| "What about their other locations?" | {provider: [last_provider], intent: "list_all_locations"} |
+| "Home Instead near me" | {provider: "Home Instead", location: [user_location]} |
+| "Add that to the database" | {intent: "add", data: [last_result]} |
+| "Compare Comfort Keepers vs Visiting Angels" | {intent: "compare", providers: ["Comfort Keepers", "Visiting Angels"]} |
+
+**Output Structure:**
+```python
+{
+    "intent": "search|add|compare|list|research|clarify",
+    "providers": [{"name": "...", "location": "...", "address": "..."}],
+    "filters": {"state": "MI", "city": "Detroit", "type": "Home Health"},
+    "references_resolved": {"this": "GCP REIT IV", "they": "Pine Ridge"},
+    "multi_step_plan": ["Find GCP properties", "Search for SNFs at addresses"],
+    "clarification_needed": null,
+    "confidence": 0.95
+}
+```
+
+**Token Cost:** ~800 tokens per query
 
 ---
 
-### Phase 3: Cross-Validation
-**Goal:** Verify extraction completeness and identify gaps.
+### Layer 1: Database Search (Rule-Based)
 
-**Steps:**
-1. **Compare extracted vs. claimed count**
-   ```python
-   claimed_count = 21
-   extracted_count = len(locations)
-   
-   if abs(extracted_count - claimed_count) > claimed_count * 0.1:
-       print(f"⚠️ COUNT MISMATCH: Claimed {claimed_count}, Extracted {extracted_count}")
-       print(f"   Difference: {abs(extracted_count - claimed_count)} locations")
-       # STOP - investigate before proceeding
-   ```
+**Purpose:** Fast lookup with zero LLM tokens.
 
-2. **Regional verification**
-   - If state has major cities, search by city: `"[Provider]" "[City]" location phone`
-   - Cross-reference with caring.com: `site:caring.com "[Provider]" [State]`
+**Methods:**
+1. Exact NPI match
+2. Exact name match (case-insensitive)
+3. SQL LIKE pattern match
+4. PostgreSQL full-text search
+5. Levenshtein distance > 80%
 
-3. **Handle duplicates BEFORE user confirmation**
-   - Apply deduplication logic (see Phase 4)
-   - Track which entries were merged and why
-
-**Quality Gate:** Final unique count must be within 10% of claimed count.
+**Token Cost:** 0 tokens
 
 ---
 
-### Phase 4: Deduplication & User Confirmation
-**Goal:** Remove duplicates and present clean dataset for approval.
+### Layer 2: Semantic Matching
 
-#### Deduplication Logic: Phone OR Address
+**Purpose:** Find matches that rule-based search misses.
 
-**Rule:** Locations are duplicates if they have:
+**Handles:**
+| Search Query | Database Record | Rule-Based | LLM Semantic |
+|--------------|-----------------|------------|--------------|
+| "Comfort Keepers" | "CK Home Care LLC" | ❌ 15% | ✅ "CK = Comfort Keepers" |
+| "Home Instead" | "Home Instead Senior Care of Boston" | ❌ 65% | ✅ "Same organization" |
+| "Visiting Angels" | "VA Healthcare Services" | ❌ 20% | ✅ "VA = Visiting Angels in context" |
+| "BrightStar Care" | "BRIGHTSTAR CARE OF MACOMB" | ✅ 75% | ✅ "Exact match, different case" |
+
+**Token Cost:** ~500 tokens (only when Layer 1 fails)
+
+---
+
+### Layer 3: Web Research + LLM Extraction
+
+**Purpose:** Extract structured data from unstructured web content.
+
+**Traditional Approach (BeautifulSoup):**
+```python
+# Breaks when HTML structure changes
+soup.find_all('div', class_='location-card')
+```
+
+**LLM-Enhanced Approach:**
+```python
+prompt = f"""
+Extract all {provider_name} locations from this HTML:
+{html_content}
+
+Return JSON with: name, address, city, state, zip, phone
+"""
+# Works regardless of HTML structure
+```
+
+**Benefits:**
+- Handles varied website structures
+- Extracts from poorly formatted pages
+- Understands context ("Call us at..." vs "Fax:")
+- No custom parsers needed per website
+
+**Token Cost:** ~2,000 tokens per page
+
+---
+
+### Layer 4: Smart Deduplication
+
+**Purpose:** Identify duplicates that rules miss.
+
+**Rule-Based (Fast):**
+- Same phone number → Duplicate
+- Same normalized address → Duplicate
+
+**LLM-Enhanced (Edge Cases):**
+| Scenario | Rule-Based | LLM |
+|----------|------------|-----|
+| "Suite 201" vs "Suite 305" same building | ❓ Depends | ✅ "Same building = duplicate" |
+| Similar names, same city, no phone | ❌ Miss | ✅ "Likely same organization" |
+| Franchise vs Corporate | ❌ Miss | ✅ "Different entities" |
+
+**Deduplication Logic: Phone OR Address**
+
+Locations are duplicates if they have:
 - **Same phone number**, OR
 - **Same address** (normalized)
 
 **NOT:** Require both to match (that's too strict)
-
-#### Implementation
 
 ```python
 def normalize_phone(phone):
@@ -165,186 +212,194 @@ def normalize_phone(phone):
     return ''.join(filter(str.isdigit, phone))
 
 def normalize_address(address):
-    """
-    Normalize address for comparison
-    - Lowercase
-    - Remove suite/floor numbers
-    - Strip punctuation
-    - Standardize spacing
-    """
+    """Normalize address for comparison - strip suite/floor, lowercase, remove punctuation"""
     if not address:
         return ""
-    
-    # Convert to lowercase
-    addr = address.lower()
-    
-    # Remove common variations
-    addr = addr.replace('suite', 'ste')
-    addr = addr.replace('floor', 'fl')
-    addr = addr.replace('apartment', 'apt')
-    addr = addr.replace('.', '')
-    addr = addr.replace(',', '')
-    
-    # Remove extra whitespace
+    addr = address.lower().replace('suite', 'ste').replace('floor', 'fl')
+    addr = addr.replace('apartment', 'apt').replace('.', '').replace(',', '')
     addr = ' '.join(addr.split())
-    
     # Extract street address only (ignore suite/floor numbers)
-    # Example: "19 Merrick Ave Suite 201" -> "19 merrick ave"
     parts = addr.split()
     street_parts = []
     for part in parts:
         if part in ['ste', 'suite', 'fl', 'floor', 'apt', 'unit', '#']:
             break
         street_parts.append(part)
-    
     return ' '.join(street_parts)
 
 def deduplicate_locations(locations):
-    """
-    Remove duplicates based on EITHER phone OR address match
-    
-    Args:
-        locations: List of dicts with 'phone' and 'address' keys
-        
-    Returns:
-        unique_locations: List of unique locations
-        duplicate_report: Dict tracking what was removed
-    """
+    """Remove duplicates based on EITHER phone OR address match"""
     unique = []
     seen_phones = set()
     seen_addresses = set()
     duplicates = []
-    
-    # Sort by completeness (entries with both phone and address first)
+
     sorted_locs = sorted(
         locations,
         key=lambda x: (bool(x.get('phone')), bool(x.get('address'))),
         reverse=True
     )
-    
+
     for loc in sorted_locs:
         phone = normalize_phone(loc.get('phone', ''))
         address = normalize_address(loc.get('address', ''))
-        
-        # Check if duplicate
         is_duplicate = False
         dup_reason = []
-        
+
         if phone and phone in seen_phones:
             is_duplicate = True
             dup_reason.append('phone')
-        
         if address and address in seen_addresses:
             is_duplicate = True
             dup_reason.append('address')
-        
+
         if is_duplicate:
-            duplicates.append({
-                'location': loc,
-                'reason': ' & '.join(dup_reason),
-                'matches': phone if 'phone' in dup_reason else address
-            })
+            duplicates.append({'location': loc, 'reason': ' & '.join(dup_reason)})
         else:
             unique.append(loc)
-            if phone:
-                seen_phones.add(phone)
-            if address:
-                seen_addresses.add(address)
-    
-    duplicate_report = {
+            if phone: seen_phones.add(phone)
+            if address: seen_addresses.add(address)
+
+    return unique, {
         'total_input': len(locations),
         'total_unique': len(unique),
         'total_duplicates': len(duplicates),
         'details': duplicates
     }
-    
-    return unique, duplicate_report
 ```
 
-#### Edge Cases
+**Edge Cases:**
+| Scenario | Result |
+|----------|--------|
+| Same phone, missing address | DUPLICATE (phone match) |
+| Same address, different suite | DUPLICATE (same street after normalization) |
+| Similar but different addresses (19 vs 21 Merrick Ave) | UNIQUE |
+| Missing both phone and address | UNIQUE (can't match empty data, flag incomplete) |
 
-1. **Same phone, missing address**
-   - Decision: DUPLICATE (phone match)
-   - Action: Keep entry with more complete data
-
-2. **Same address with different suite numbers**
-   - Example: "19 Merrick Ave Suite 201" vs "19 Merrick Ave Suite 305"
-   - Decision: DUPLICATE (same street address after normalization)
-   - Action: Keep first entry
-
-3. **Similar but different addresses**
-   - Example: "19 Merrick Ave" vs "21 Merrick Ave"
-   - Decision: UNIQUE (different street numbers)
-   - Action: Keep both
-
-4. **Missing data**
-   - Example: Phone="" and Address=""
-   - Decision: UNIQUE (can't match empty data)
-   - Action: Keep but flag as incomplete
-
-#### User Confirmation Template
-
-```python
-def present_summary_for_approval(provider, state, unique_locs, dup_report, claimed_count):
-    """Present summary and wait for user approval"""
-    
-    print(f"\n{'='*80}")
-    print(f"RESEARCH SUMMARY: {provider} - {state}")
-    print(f"{'='*80}\n")
-    
-    print(f"Claimed count (from website): {claimed_count}")
-    print(f"Extracted count (raw):        {dup_report['total_input']}")
-    print(f"Unique count (after dedup):   {dup_report['total_unique']}")
-    print(f"Duplicates removed:           {dup_report['total_duplicates']}")
-    
-    if dup_report['total_duplicates'] > 0:
-        print(f"\nDuplicate Details:")
-        for dup in dup_report['details'][:5]:  # Show first 5
-            print(f"  ✗ {dup['location'].get('name', 'N/A')} - Duplicate by {dup['reason']}")
-    
-    print(f"\n{'='*80}")
-    print(f"VALIDATION:")
-    print(f"{'='*80}\n")
-    
-    variance = abs(dup_report['total_unique'] - claimed_count)
-    variance_pct = (variance / claimed_count * 100) if claimed_count > 0 else 0
-    
-    if variance_pct <= 10:
-        print(f"✅ Count variance: {variance} ({variance_pct:.1f}%) - ACCEPTABLE")
-    else:
-        print(f"⚠️ Count variance: {variance} ({variance_pct:.1f}%) - INVESTIGATE")
-    
-    print(f"\nEstimated token cost for {dup_report['total_unique']} locations:")
-    print(f"  • NPI lookups: ~{dup_report['total_unique'] * 1500:,} tokens")
-    print(f"  • Data enrichment: ~{dup_report['total_unique'] * 1300:,} tokens")
-    print(f"  • TOTAL: ~{dup_report['total_unique'] * 2800:,} tokens")
-    
-    print(f"\n{'='*80}")
-    print(f"Ready to proceed with detailed research on {dup_report['total_unique']} locations?")
-    print(f"{'='*80}\n")
-```
-
-**Quality Gate:** User must explicitly approve before proceeding with detailed research.
+**Token Cost:** ~1,000 tokens (only for ambiguous cases)
 
 ---
 
-## Search Strategy Enhancements
+### Layer 5: NPI Matching Intelligence
 
-### Why web_search > web_fetch for discovery
+**Purpose:** Match provider to NPI registry when names don't align.
 
-**web_search advantages:**
-1. **Finds multiple sources** - Returns top 10 results, gives comprehensive view
-2. **Structured snippets** - Pre-parsed phone numbers and addresses
-3. **Cross-validation** - Can compare provider website vs caring.com vs local directories
-4. **Regional discovery** - Reveals locations that may not be on main directory page
+**Problem:** Business names often differ from NPI registered names.
 
-**web_fetch limitations:**
-1. **Single page only** - Misses locations on separate pages
-2. **Manual parsing** - Requires custom code for each site structure
-3. **No context** - Doesn't show how locations appear on other platforms
+**Example:**
+- Searching for: "Comfort Keepers of Oakland County"
+- NPI Registry has: "CK FRANCHISING INC" or "COMFORT KEEPERS #547"
 
-### Multi-source search strategy
+**LLM Matching:**
+```python
+{
+    "best_match": {
+        "npi": "1234567890",
+        "confidence": 0.95,
+        "reasoning": "Franchise number #547 matches Oakland County territory"
+    }
+}
+```
 
+**Token Cost:** ~500 tokens
+
+---
+
+## Token Cost Summary
+
+| Layer | When Used | Tokens |
+|-------|-----------|--------|
+| 0: Interpretation | Always | ~800 |
+| 1: Database | Always | 0 |
+| 2: Semantic | When Layer 1 fails | ~500 |
+| 3: Extraction | Web research | ~2,000/page |
+| 4: Deduplication | Edge cases only | ~1,000 |
+| 5: NPI Matching | Fuzzy matches | ~500 |
+
+**Typical Query Costs:**
+- Found in database: ~800 tokens (interpretation only)
+- Semantic match needed: ~1,300 tokens
+- Full web research: ~5,000-10,000 tokens
+
+**Per-Location Costs (detailed research):**
+
+| Task | Tokens | Notes |
+|------|--------|-------|
+| NPI lookup (individual) | ~1,500 | Search by name + credentials validation |
+| NPI lookup (organization) | ~800 | Simpler, just business name |
+| Data enrichment | ~1,300 | Address formatting, phone validation, etc. |
+| **Total per location** | **~2,800** | Average across mix of individual/org |
+
+**Full Project Estimates:**
+- 10 locations: ~28,000 tokens
+- 21 locations: ~58,800 tokens
+- 50 locations: ~140,000 tokens
+- 100 locations: ~280,000 tokens
+
+---
+
+## The 4-Phase Research Workflow
+
+### Critical Rule: NEVER Start Research Without Verified Count
+
+**STOP and verify count BEFORE beginning detailed research on individual locations.**
+
+### Phase 1: Initial Count Verification (MANDATORY)
+
+1. **Extract claimed count from provider website**
+   - Search: `"[Provider]" "[State]" "showing * locations"`
+   - Look for: "showing X locations", "X offices in [State]"
+
+2. **Find and verify location directory page**
+   - Search: `"[Provider]" "[State]" locations directory`
+   - If web_search returns fewer than claimed → use web_fetch for complete HTML
+
+3. **Quality Gate:** Do NOT proceed until target count is established.
+
+### Phase 2: Structured Data Extraction
+
+Extract with code (LLM-enhanced), not manual parsing:
+```python
+prompt = f"""Extract all {provider_name} locations from this HTML:
+{html_content}
+Return JSON with: franchise_id, name, phone, address"""
+```
+
+**Quality Gate:** Extracted count must match claimed count (±10%).
+
+### Phase 3: Cross-Validation
+
+1. Compare extracted vs claimed count
+2. Regional verification for major cities
+3. Cross-reference with third-party sources (caring.com, etc.)
+4. Apply deduplication before user confirmation
+
+**Quality Gate:** Final unique count within 10% of claimed.
+
+### Phase 4: User Confirmation
+
+Present summary for approval before proceeding:
+
+```
+RESEARCH SUMMARY: Home Instead - New York
+Claimed count (from website): 21
+Extracted count (raw):        23
+Unique count (after dedup):   21
+Duplicates removed:           2
+  ✗ Nassau County (#236 & #379) - Duplicate by phone
+  ✗ Manhattan (#368 & #515) - Duplicate by phone
+Count variance: 0 (0.0%) - ACCEPTABLE
+Estimated tokens for 21 locations: ~58,800
+Ready to proceed?
+```
+
+**Quality Gate:** User must explicitly approve before detailed research.
+
+---
+
+## Search Strategy
+
+### Multi-Source Approach
 ```python
 # Search 1: Get target count
 web_search('"Home Instead" "New York" "showing * locations"')
@@ -354,7 +409,6 @@ web_search('"Home Instead" "New York" locations directory')
 
 # Search 3: Regional fill (if gaps found)
 web_search('"Home Instead" "Manhattan" location phone')
-web_search('"Home Instead" "Brooklyn" location phone')
 
 # Search 4: Third-party validation
 web_search('site:caring.com "Home Instead" "New York"')
@@ -362,27 +416,62 @@ web_search('site:caring.com "Home Instead" "New York"')
 
 ---
 
-## Token Estimation
+## When to Use Each Layer
 
-**Per-location costs (based on Home Instead MA & NY research):**
+| Scenario | Layers Used | Tokens |
+|----------|-------------|--------|
+| User asks clear question, found in DB | 0 → 1 | ~800 |
+| User uses pronouns/references | 0 → 1 | ~800 |
+| Query uses abbreviations | 0 → 1 → 2 | ~1,300 |
+| Not in database, need web research | 0 → 1 → 2 → 3 | ~5,000+ |
+| Complex comparison query | 0 → multi-step execution | ~2,000+ |
+| Ambiguous query | 0 → clarification | ~800 |
 
-| Task | Tokens | Notes |
-|------|--------|-------|
-| NPI lookup (individual) | ~1,500 | Search by name + credentials validation |
-| NPI lookup (organization) | ~800 | Simpler, just business name |
-| Data enrichment | ~1,300 | Address formatting, phone validation, etc. |
-| **Total per location** | **~2,800** | Average across mix of individual/org |
+---
 
-**Full project estimates:**
-- 10 locations: ~28,000 tokens
-- 21 locations: ~58,800 tokens (Home Instead NY)
-- 50 locations: ~140,000 tokens
-- 100 locations: ~280,000 tokens
+## Usage
 
-**Cost-benefit analysis:**
-- Upfront workflow (Phases 1-4): ~5,000-8,000 tokens
-- Savings from preventing reruns: ~30,000-60,000 tokens per avoided restart
-- ROI: 4-8x token savings on medium projects
+### Basic Query
+```python
+from provider_research_llm import ProviderResearchLLM
+
+research = ProviderResearchLLM(db=db_connection)
+
+result = research.process_query(
+    user_query="Find Home Instead in Boston",
+    user_context={"location": "Boston, MA"}
+)
+```
+
+### With Conversation History
+```python
+result = research.process_query(
+    user_query="What about their other locations?",
+    conversation_history=[
+        {"role": "user", "content": "Find Home Instead in Boston"},
+        {"role": "assistant", "content": "Found Home Instead - Metrowest..."}
+    ],
+    user_context={"location": "Boston, MA"}
+)
+```
+
+### Individual Layers
+```python
+# Just interpretation
+parsed = research.interpret_query("Find CK near me", user_context={"location": "Detroit, MI"})
+
+# Just semantic matching
+matches = research.semantic_match("Comfort Keepers", {"state": "MI"})
+
+# Just extraction
+locations = research.extract_locations(html_content, "Home Instead", state="MA")
+
+# Just deduplication
+unique, report = research.deduplicate_locations(raw_locations)
+
+# Just NPI matching
+npi_match = research.match_to_npi(provider_info, npi_search_results)
+```
 
 ---
 
@@ -399,92 +488,57 @@ web_search('site:caring.com "Home Instead" "New York"')
 
 ## Common Pitfalls & Solutions
 
-### Pitfall 1: Fragmented web_search data
-**Problem:** web_search returns 3-5 locations per result, miss full list.  
-**Solution:** Always use web_fetch on the main directory page URL found via web_search.
-
-### Pitfall 2: Manual counting errors
-**Problem:** "I see 14 locations" when there are actually 21.  
-**Solution:** Use code to count. Humans miss duplicates and multi-page lists.
-
-### Pitfall 3: Starting research too early
-**Problem:** Spend 40,000 tokens on 14 locations, then discover 7 more exist.  
-**Solution:** Complete all 4 phases before starting detailed research.
-
-### Pitfall 4: Over-aggressive deduplication
-**Problem:** Treating same address with different suite numbers as unique.  
-**Solution:** Normalize addresses by stripping suite numbers in comparison logic.
-
-### Pitfall 5: Under-aggressive deduplication
-**Problem:** Only deduplicating on phone AND address, missing obvious duplicates.  
-**Solution:** Deduplicate on phone OR address (not both required).
+| Pitfall | Problem | Solution |
+|---------|---------|----------|
+| Fragmented search data | web_search returns 3-5 locations, missing full list | Always web_fetch the main directory page |
+| Manual counting errors | "I see 14" when there are 21 | Use code to count, never manual |
+| Starting research too early | Spend 40K tokens on 14 locations, then find 7 more | Complete all 4 phases first |
+| Over-aggressive dedup | Same address, different suite treated as unique | Normalize by stripping suite numbers |
+| Under-aggressive dedup | Require phone AND address match | Deduplicate on phone OR address |
 
 ---
 
-## Example: Home Instead New York
+## Best Practices
 
-**Claimed count:** "Home Instead has locations throughout New York"  
-**Initial web_search:** Revealed 14 franchise IDs  
-**After web_fetch + code extraction:** 23 franchise IDs found  
-**After deduplication (phone OR address):** 21 unique locations  
-
-**Duplicates identified:**
-- Nassau County (#236 & #379) - Same phone: (516) 826-6307
-- Manhattan (#368 & #515) - Same phone: (212) 614-8057
-
-**Result:** ✅ 21 unique locations ready for research (~58,800 tokens)
+1. **Always start with Layer 0** - Even clear queries benefit from structured interpretation
+2. **Let Layer 1 handle most queries** - Rule-based is fast and free
+3. **Use Layer 2 for fuzzy cases** - Only invoke when string matching <70%
+4. **Cache extraction results** - Web content rarely changes, save tokens
+5. **Batch NPI lookups** - One LLM call can match multiple providers
+6. **Verify counts before researching** - Prevents costly restarts
 
 ---
 
-## Implementation Checklist
+## Files
 
-Before starting any provider research project:
-
-- [ ] Phase 1: Target count verified from provider website
-- [ ] Phase 2: HTML extracted and parsed with code
-- [ ] Phase 2: Extraction count ≥ 90% of target
-- [ ] Phase 3: Regional searches completed (if needed)
-- [ ] Phase 3: Third-party validation (caring.com, etc.)
-- [ ] Phase 4: Deduplication applied (phone OR address)
-- [ ] Phase 4: Duplicate report generated
-- [ ] Phase 4: Final count within 10% of claimed
-- [ ] Phase 4: User approved dataset and token estimate
-- [ ] Ready to begin detailed NPI research
+```
+provider-research-skill/
+├── SKILL.md                        # This documentation
+├── ORCHESTRATION.md                # Workflow orchestration
+├── provider_research_llm.py        # LLM-enhanced module
+├── provider_database_postgres.py   # PostgreSQL database
+├── provider_database_sqlite.py     # SQLite alternative (lightweight)
+├── provider_search.py              # Rule-based fuzzy search
+├── README.md                       # General documentation
+└── requirements.txt                # Dependencies
+```
 
 ---
 
 ## Tools Required
 
-1. **Python with BeautifulSoup** - HTML parsing
-2. **web_search** - Multi-source discovery
-3. **web_fetch** - Complete page retrieval
-4. **SQLite database** - Store results (optional but recommended)
-5. **NPI Registry MCP** - Provider credential lookup
+1. **Python 3.10+** with BeautifulSoup for HTML parsing
+2. **PostgreSQL 16** (primary) or **SQLite** (lightweight alternative)
+3. **web_search** - Multi-source discovery
+4. **web_fetch** - Complete page retrieval
+5. **NPI Registry** - Provider credential lookup (public API)
 
 ---
 
-## Success Metrics
+## Future Enhancements
 
-**Before this skill:**
-- 50% of projects required restarts due to incomplete counts
-- Average token waste: ~35,000 per restart
-- Frequent duplicates in final datasets
-
-**After this skill:**
-- 95% of projects complete on first attempt
-- Token waste reduced by 80%
-- Clean, deduplicated datasets
-- User confidence in accuracy
-
----
-
-## Questions to Ask Yourself
-
-Before starting research:
-1. "Have I verified the total count from the provider website?"
-2. "Am I extracting data with code, not manually?"
-3. "Have I accounted for duplicates?"
-4. "Does my final count make sense?"
-5. "Have I presented the summary for user approval?"
-
-If any answer is "no," stop and complete that phase first.
+- [ ] Fine-tuned embedding model for Layer 2 (faster semantic matching)
+- [ ] Cached prompt templates (reduce interpretation tokens)
+- [ ] Streaming extraction for large pages
+- [ ] Multi-provider comparison in single LLM call
+- [ ] Learning from user corrections
