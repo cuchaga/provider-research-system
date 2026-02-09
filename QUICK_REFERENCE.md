@@ -30,12 +30,12 @@ provider-research-skill/
 │   └── test_provider_research_llm.py     # Tests (45KB)
 │
 ├── Documentation
-│   ├── README.md                         # v2.0.0 guide
-│   ├── MULTI_SKILL_ARCHITECTURE.md       # v2.0.0 architecture
-│   ├── SESSION_HANDOFF.md                # Context preservation
-│   ├── ARCHITECTURE.md                   # v1.0.0 architecture
-│   ├── PROJECT_CONTEXT.md                # Complete context
-│   └── docs/architecture-diagram.html    # Visual diagram
+│   ├── README.md                         # Package documentation
+│   ├── docs/architecture/                # Architecture docs
+│   │   ├── overview.md                   # Technical architecture
+│   │   ├── v2-multi-skill.md             # v2.0.0 multi-skill architecture
+│   │   └── project-structure.md          # Directory layout
+│   └── docs/getting-started.md           # Quick start guide
 │
 └── Config
     ├── requirements.txt

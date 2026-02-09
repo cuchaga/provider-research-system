@@ -67,12 +67,10 @@
 - Integration across all database methods
 
 **Supporting files created:**
-- `example_usage.py` - 6 comprehensive examples
-- `test_multi_skill.py` - Validation (6/6 tests passing)
-- `example_history_tracking.py` - 9 history tracking examples
-- `example_web_scraping.py` - 7 web scraping examples
-- `MULTI_SKILL_ARCHITECTURE.md` - Complete architecture docs (25KB)
-- `README.md` - Updated for v2.0.0 (18KB)
+- `examples/` - Working code examples (basic + advanced)
+- `tests/test_validation.py` - Validation (9/9 tests passing)
+- `docs/architecture/v2-multi-skill.md` - Complete architecture docs
+- `README.md` - Updated for v2.0.0
 - `__init__.py` - v2.0.0 exports with backward compatibility
 - `SESSION_HANDOFF.md` - This file for context preservation
 
@@ -85,9 +83,9 @@
 2. **`QUICK_REFERENCE.md`** - Quick commands & patterns (updated)
 
 ### For Deep Dive:
-3. **`MULTI_SKILL_ARCHITECTURE.md`** - Full v2.0.0 architecture
-4. **`README.md`** - v2.0.0 usage guide
-5. **`example_usage.py`** - Working code examples
+3. **`provider-research-skill/docs/architecture/v2-multi-skill.md`** - Full v2.0.0 architecture
+4. **`provider-research-skill/README.md`** - v2.0.0 usage guide
+5. **`provider-research-skill/examples/`** - Working code examples
 
 ### If Working on Specific Skills:
 - `provider_orchestrator.py` - Main coordinator
@@ -182,7 +180,7 @@ result = orchestrator.process_query(
 4. **Test with actual database** - Requires PostgreSQL setup
 
 ### If Deploying:
-1. Review `MULTI_SKILL_ARCHITECTURE.md` deployment section
+1. Review `provider-research-skill/docs/architecture/v2-multi-skill.md` deployment section
 2. Set up PostgreSQL database
 3. Configure environment variables (ANTHROPIC_API_KEY)
 4. Install dependencies: `pip install -r requirements.txt`
@@ -221,8 +219,8 @@ result = orchestrator.process_query(
 - SESSION_HANDOFF.md (this file)
 
 **Updated:**
-- __init__.py (v2.0.0 exports)
-- README.md (v2.0.0 guide)
+- provider_research/__init__.py (v2.0.0 exports)
+- provider-research-skill/README.md (v2.0.0 guide)
 - PROJECT_CONTEXT.md (v2.0.0 info)
 - QUICK_REFERENCE.md (v2.0.0 commands)
 

@@ -32,20 +32,14 @@ A multi-skill AI-powered system for researching healthcare providers with intell
 ### Architecture
 - [System Overview](architecture/overview.md)
 - [v2.0 Multi-Skill Architecture](architecture/v2-multi-skill.md)
-- [Migration from v1.0](architecture/migration-guide.md)
-
-### API Reference
-- [Orchestrator](api/orchestrator.md)
-- [Query Interpreter](api/query-interpreter.md)
-- [Database Manager](api/database-manager.md)
-- [Semantic Matcher](api/semantic-matcher.md)
-- [Web Researcher](api/web-researcher.md)
+- [Project Structure](architecture/project-structure.md)
 
 ### Guides
 - [Database Setup](guides/database-setup.md)
-- [Development Guide](guides/development.md)
-- [Deployment Guide](guides/deployment.md)
-- [Troubleshooting](guides/troubleshooting.md)
+
+### Examples
+- [Basic Usage](../examples/basic_usage.py)
+- [Advanced Orchestration](../examples/advanced_orchestration.py)
 
 ## Support
 

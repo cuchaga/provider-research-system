@@ -266,9 +266,11 @@ python3 test_provider_research_llm.py
 
 ```
 provider-research-system/
-├── MULTI_SKILL_ARCHITECTURE.md      # Detailed architecture docs
 ├── PROJECT_CONTEXT.md                # Project context for new sessions
+├── QUICK_REFERENCE.md                # Quick reference guide
+├── SESSION_HANDOFF.md                # Session handoff notes
 ├── provider-research-skill/
+│   ├── docs/architecture/v2-multi-skill.md  # Multi-skill architecture
 │   ├── provider_orchestrator.py          # Main orchestrator
 │   ├── provider_query_interpreter.py     # Skill 1
 │   ├── provider_database_manager.py      # Skill 2
@@ -396,10 +398,11 @@ Skills can scale independently as microservices
 
 ## 📚 Documentation
 
-- **[MULTI_SKILL_ARCHITECTURE.md](MULTI_SKILL_ARCHITECTURE.md)** - Complete architecture guide
+- **[Multi-Skill Architecture](provider-research-skill/docs/architecture/v2-multi-skill.md)** - Complete architecture guide
+- **[Architecture Overview](provider-research-skill/docs/architecture/overview.md)** - Technical specifications
+- **[Project Structure](provider-research-skill/docs/architecture/project-structure.md)** - Directory layout
+- **[Getting Started](provider-research-skill/docs/getting-started.md)** - Installation and setup
 - **[PROJECT_CONTEXT.md](PROJECT_CONTEXT.md)** - Project overview and context
-- **[ARCHITECTURE.md](provider-research-skill/ARCHITECTURE.md)** - Technical specifications
-- **[SKILL.md](provider-research-skill/SKILL.md)** - Claude AI skill instructions
 
 ---
 
@@ -467,9 +470,9 @@ MIT License - see [LICENSE](provider-research-skill/LICENSE)
 ## 📞 Support
 
 For questions or issues:
-1. Review [`example_usage.py`](provider-research-skill/example_usage.py)
-2. Check [`MULTI_SKILL_ARCHITECTURE.md`](MULTI_SKILL_ARCHITECTURE.md)
-3. Run tests: `python3 test_multi_skill.py`
+1. Review [examples](provider-research-skill/examples/)
+2. Check [Multi-Skill Architecture](provider-research-skill/docs/architecture/v2-multi-skill.md)
+3. Run tests: `cd provider-research-skill && pytest`
 
 ---
 

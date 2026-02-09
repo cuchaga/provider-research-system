@@ -126,12 +126,9 @@ Layer 5: NPI Validation           (~500 tokens)   - Registry + LLM matching
 ### Documentation
 | File | Size | Purpose |
 |------|------|---------|
-| `README.md` | 18KB | **v2.0.0** - Multi-skill architecture guide |
-| `MULTI_SKILL_ARCHITECTURE.md` | 25KB | **NEW** - Complete v2.0.0 architecture docs |
-| `ARCHITECTURE.md` | 18KB | v1.0.0 - Legacy architecture specification |
-| `SKILL.md` | 16KB | Claude skill instructions (LLM-enhanced) |
-| `ORCHESTRATION.md` | 29KB | v1.0.0 - Workflow orchestration guide |
-| `TEST_CASES.md` | 19KB | Detailed test specifications (v1.0.0) |
+| `provider-research-skill/README.md` | 18KB | Package documentation and usage guide |
+| `provider-research-skill/docs/architecture/v2-multi-skill.md` | 14KB | Complete v2.0.0 architecture docs |
+| `provider-research-skill/docs/architecture/overview.md` | 18KB | Technical architecture specification |
 | `PROJECT_CONTEXT.md` | 15KB | **THIS FILE** - Complete project context |
 | `QUICK_REFERENCE.md` | 8KB | Quick start commands and patterns |
 
@@ -408,12 +405,12 @@ bash scripts/init_database.sh
    - Simulation mode available
 
 #### Supporting Files
-- **`example_usage.py` (10KB)** - 6 comprehensive examples showing all features
-- **`test_multi_skill.py` (8KB)** - Quick validation suite (6/6 tests passing)
-- **`MULTI_SKILL_ARCHITECTURE.md` (25KB)** - Complete architecture documentation
+- **`provider-research-skill/examples/` (2 files)** - Working examples (basic + advanced)
+- **`provider-research-skill/tests/test_validation.py`** - Quick validation suite (9/9 tests passing)
+- **`provider-research-skill/docs/architecture/v2-multi-skill.md` (14KB)** - Complete architecture documentation
 - **`SESSION_HANDOFF.md` (NEW)** - Context preservation for new chat sessions
-- **`README.md` (updated to 18KB)** - v2.0.0 usage guide
-- **`__init__.py` (updated)** - Exports for both v1.0.0 and v2.0.0
+- **`provider-research-skill/README.md` (updated)** - v2.0.0 usage guide
+- **`provider-research-skill/__init__.py` (updated)** - Exports for v2.0.0
 
 #### Git Status
 - **Commit:** `bb69e06` - "Implement multi-skill architecture with orchestrator"
@@ -474,10 +471,10 @@ bash scripts/init_database.sh
 8. **Execution paths** - 4 distinct paths (DB Hit, Semantic, Web, Clarification)
 9. **Lazy imports** - psycopg2 loaded only when needed
 10. **Simulation modes** - LLM skills can run without API for testing
-11. **Backward compatib9, 2026 (v2.0.0 Multi-Skill Architecture) - v1.0.0 API preserved, no breaking changes
-14. **Documented** in MULTI_SKILL_ARCHITECTURE.md
-15. **Validated** with 6/6 tests passing
-16. **Committed** to git (bb69e06) and pushed to main
+11. **Backward compatible** - v1.0.0 API preserved, no breaking changes
+14. **Documented** in provider-research-skill/docs/architecture/v2-multi-skill.md
+15. **Validated** with 9/9 tests passing
+16. **Committed** to git and pushed to main
 17. **Maintained** full backward compatibility with v1.0.0
 
 ### Key Design Decisions
