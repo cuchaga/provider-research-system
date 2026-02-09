@@ -1,0 +1,118 @@
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#8B5CF6', 'primaryTextColor': '#fff', 'primaryBorderColor': '#7C3AED', 'lineColor': '#F59E0B', 'secondaryColor': '#10B981', 'tertiaryColor': '#1F2937'}}}%%
+
+flowchart TB
+    subgraph INPUT["📥 INPUT"]
+        USER[/"👤 User Query"/]
+        CTX[("🧠 Context<br/>• Conversation History<br/>• User Location<br/>• Last Result")]
+    end
+
+    subgraph LAYER0["🔮 LAYER 0: PROMPT INTERPRETATION<br/>~800 tokens"]
+        L0_PARSE["Parse Intent<br/>search | add | compare | list"]
+        L0_ENTITY["Extract Entities<br/>• Provider names<br/>• Locations<br/>• Filters"]
+        L0_RESOLVE["Resolve References<br/>• 'this' → entity<br/>• 'that' → entity<br/>• 'near me' → location"]
+        L0_PLAN["Create Plan<br/>• Single step<br/>• Multi-step"]
+        L0_CHECK{"Clarification<br/>Needed?"}
+    end
+
+    subgraph LAYER1["⚡ LAYER 1: DATABASE SEARCH<br/>0 tokens (rule-based)"]
+        L1_NPI["Exact NPI Match"]
+        L1_NAME["Exact Name Match"]
+        L1_LIKE["SQL LIKE Pattern"]
+        L1_FTS["Full-Text Search"]
+        L1_FUZZY["Levenshtein Fuzzy<br/>threshold: 80%"]
+        L1_CHECK{"Match<br/>≥80%?"}
+    end
+
+    subgraph LAYER2["🧩 LAYER 2: SEMANTIC MATCHING<br/>~500 tokens"]
+        L2_ABBREV["Abbreviation Expansion<br/>CK → Comfort Keepers"]
+        L2_PARENT["Parent/Subsidiary<br/>Matching"]
+        L2_DBA["DBA Name<br/>Resolution"]
+        L2_CHECK{"Match<br/>≥0.7?"}
+    end
+
+    subgraph LAYER3["🌐 LAYER 3: WEB RESEARCH<br/>~2,000-5,000 tokens"]
+        L3_SEARCH["Web Search<br/>'[provider] locations [state]'"]
+        L3_FETCH["Fetch Content<br/>HTML/Text"]
+        L3_EXTRACT["LLM Extraction<br/>• Names<br/>• Addresses<br/>• Phones"]
+    end
+
+    subgraph LAYER4["🔄 LAYER 4: DEDUPLICATION<br/>~1,000 tokens"]
+        L4_RULE["Rule-Based Pass<br/>• Phone matching<br/>• Address normalization"]
+        L4_LLM["LLM Pass (Edge Cases)<br/>• Same building<br/>• Franchise logic"]
+    end
+
+    subgraph LAYER5["✅ LAYER 5: NPI VALIDATION<br/>~500 tokens"]
+        L5_API["NPI Registry<br/>API Search"]
+        L5_MATCH["LLM Matching<br/>• Name correlation<br/>• Address proximity"]
+    end
+
+    subgraph STORAGE["💾 STORAGE"]
+        DB[(PostgreSQL<br/>providers<br/>search_history<br/>research_sessions)]
+    end
+
+    subgraph OUTPUT["📤 OUTPUT"]
+        RESULT[/"📋 Results<br/>• Providers found<br/>• Confidence scores<br/>• Execution trace"/]
+        CLARIFY[/"❓ Clarification<br/>Request"/]
+    end
+
+    %% Flow connections
+    USER --> L0_PARSE
+    CTX -.-> L0_RESOLVE
+    
+    L0_PARSE --> L0_ENTITY
+    L0_ENTITY --> L0_RESOLVE
+    L0_RESOLVE --> L0_PLAN
+    L0_PLAN --> L0_CHECK
+    
+    L0_CHECK -->|Yes| CLARIFY
+    L0_CHECK -->|No| L1_NPI
+    
+    L1_NPI --> L1_NAME
+    L1_NAME --> L1_LIKE
+    L1_LIKE --> L1_FTS
+    L1_FTS --> L1_FUZZY
+    L1_FUZZY --> L1_CHECK
+    
+    L1_CHECK -->|Yes| RESULT
+    L1_CHECK -->|No| L2_ABBREV
+    
+    L2_ABBREV --> L2_PARENT
+    L2_PARENT --> L2_DBA
+    L2_DBA --> L2_CHECK
+    
+    L2_CHECK -->|Yes| RESULT
+    L2_CHECK -->|No| L3_SEARCH
+    
+    L3_SEARCH --> L3_FETCH
+    L3_FETCH --> L3_EXTRACT
+    L3_EXTRACT --> L4_RULE
+    
+    L4_RULE --> L4_LLM
+    L4_LLM --> L5_API
+    
+    L5_API --> L5_MATCH
+    L5_MATCH --> DB
+    DB --> RESULT
+
+    %% Styling
+    classDef inputStyle fill:#3B82F6,stroke:#1D4ED8,color:#fff
+    classDef layer0Style fill:#8B5CF6,stroke:#7C3AED,color:#fff
+    classDef layer1Style fill:#10B981,stroke:#059669,color:#fff
+    classDef layer2Style fill:#F59E0B,stroke:#D97706,color:#fff
+    classDef layer3Style fill:#EF4444,stroke:#DC2626,color:#fff
+    classDef layer4Style fill:#EC4899,stroke:#DB2777,color:#fff
+    classDef layer5Style fill:#06B6D4,stroke:#0891B2,color:#fff
+    classDef storageStyle fill:#6366F1,stroke:#4F46E5,color:#fff
+    classDef outputStyle fill:#22C55E,stroke:#16A34A,color:#fff
+    classDef decisionStyle fill:#FBBF24,stroke:#F59E0B,color:#000
+
+    class USER,CTX inputStyle
+    class L0_PARSE,L0_ENTITY,L0_RESOLVE,L0_PLAN layer0Style
+    class L1_NPI,L1_NAME,L1_LIKE,L1_FTS,L1_FUZZY layer1Style
+    class L2_ABBREV,L2_PARENT,L2_DBA layer2Style
+    class L3_SEARCH,L3_FETCH,L3_EXTRACT layer3Style
+    class L4_RULE,L4_LLM layer4Style
+    class L5_API,L5_MATCH layer5Style
+    class DB storageStyle
+    class RESULT,CLARIFY outputStyle
+    class L0_CHECK,L1_CHECK,L2_CHECK decisionStyle
