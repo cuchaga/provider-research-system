@@ -287,10 +287,11 @@ provider-research-system/
 │   └── test_provider_research_llm.py     # Full test suite
 │   │
 │   └── [Documentation]
-│       ├── README.md
-│       ├── ARCHITECTURE.md
-│       ├── SKILL.md
-│       └── ORCHESTRATION.md
+│      ├── README.md
+│       └── docs/
+│           ├── architecture/
+│           ├── guides/
+│           └── getting-started.md
 ```
 
 ---

@@ -370,12 +370,12 @@ python3 test_provider_research_llm.py
 ```
 provider-research-skill/
 ├── README.md                        # This file
-├── SKILL.md                         # Claude skill instructions (LLM-enhanced)
-├── ORCHESTRATION.md                 # Workflow orchestration guide
-├── TEST_CASES.md                    # Detailed test specifications
+├── docs/                            # Documentation
+│   ├── architecture/                # Architecture docs
+│   ├── guides/                      # Setup and usage guides
+│   └── getting-started.md           # Quick start
 ├── requirements.txt                 # Python dependencies
-├── provider_research_llm.py         # Main LLM-enhanced module
-├── provider_database_postgres.py    # PostgreSQL database layer
+├── provider_research/               # Main package
 ├── provider_database_sqlite.py      # SQLite alternative (lightweight)
 ├── provider_search.py               # Rule-based fuzzy search
 └── test_provider_research_llm.py    # Comprehensive test suite
