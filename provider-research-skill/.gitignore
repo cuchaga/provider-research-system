@@ -68,20 +68,14 @@ Thumbs.db
 data/db_state.json
 data/db_state_cleaned.json
 data/*.json
+data/cache/
+data/exports/
+!data/.gitkeep
 
 # PostgreSQL data
 *.sql.backup
 
-# Example and test files (development only)
-example_*.py
-test_*.py
-*_test.py
-show_*.py
-setup_local_search.py
-usage_guide.py
-
-# Redundant documentation (keeping only essential docs)
-COMPLETION_SUMMARY.txt
-ENRICHMENT_REPORT.md
-FINAL_SUMMARY.md
-POSTGRES_SUCCESS.md
+# Configuration (use .example files as templates)
+config/*.yml
+config/*.yaml
+!config/**/*.example.*

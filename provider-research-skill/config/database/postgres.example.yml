@@ -1,0 +1,30 @@
+# PostgreSQL Database Configuration Template
+# Copy this file to postgres.yml and update with your settings
+
+database:
+  type: postgres
+  
+  postgres:
+    host: localhost
+    port: 5432
+    database: providers
+    user: provider_admin
+    password: provider123
+    
+    # Connection pool settings
+    min_connections: 1
+    max_connections: 10
+    
+    # Timeout settings (seconds)
+    connection_timeout: 30
+    command_timeout: 60
+    
+    # SSL mode: disable, allow, prefer, require, verify-ca, verify-full
+    sslmode: prefer
+
+# Optional: Read replicas
+read_replicas:
+  - host: replica1.example.com
+    port: 5432
+  - host: replica2.example.com
+    port: 5432

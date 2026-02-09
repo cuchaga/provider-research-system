@@ -1,0 +1,24 @@
+# SQLite Database Configuration Template
+# Copy this file to sqlite.yml and update with your settings
+
+database:
+  type: sqlite
+  
+  sqlite:
+    # Path to SQLite database file
+    path: data/providers.db
+    
+    # Create directory if it doesn't exist
+    create_dir: true
+    
+    # Timeout for database operations (seconds)
+    timeout: 30
+    
+    # Journal mode: DELETE, TRUNCATE, PERSIST, MEMORY, WAL, OFF
+    journal_mode: WAL
+    
+    # Synchronous mode: OFF, NORMAL, FULL, EXTRA
+    synchronous: NORMAL
+    
+    # Cache size (in pages, negative = KB)
+    cache_size: -10000  # 10MB

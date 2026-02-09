@@ -1,0 +1,113 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "provider-research"
+version = "2.0.0"
+description = "Multi-skill healthcare provider research system with AI orchestration"
+readme = "README.md"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+license = {text = "MIT"}
+requires-python = ">=3.9"
+keywords = ["healthcare", "providers", "research", "ai", "llm", "npi"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Healthcare Industry",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+
+dependencies = [
+    "psycopg2-binary>=2.9.9",
+    "anthropic>=0.18.0",
+    "beautifulsoup4>=4.12.0",
+    "requests>=2.31.0",
+    "python-dateutil>=2.8.2",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "isort>=5.12.0",
+]
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.0.0",
+]
+all = [
+    "provider-research[dev,docs]",
+]
+
+[project.urls]
+Homepage = "https://github.com/cuchaga/provider-research-system"
+Documentation = "https://github.com/cuchaga/provider-research-system/tree/main/docs"
+Repository = "https://github.com/cuchaga/provider-research-system.git"
+Issues = "https://github.com/cuchaga/provider-research-system/issues"
+
+[project.scripts]
+provider-research = "tools.cli:main"
+
+[tool.setuptools]
+packages = ["provider_research", "provider_research.core", "provider_research.database", "provider_research.search", "provider_research.utils"]
+
+[tool.setuptools.package-data]
+provider_research = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ['py39', 'py310', 'py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=provider_research --cov-report=html --cov-report=term"
+
+[tool.coverage.run]
+source = ["provider_research"]
+omit = ["*/tests/*", "*/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+]
