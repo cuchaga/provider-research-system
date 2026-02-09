@@ -151,6 +151,171 @@ class ProviderDatabasePostgres:
         result = cur.fetchone()
         return result[0] if result else provider_id
     
+    def record_history(self,
+                      provider_id: str,
+                      change_type: str,
+                      field_name: str,
+                      old_value: str,
+                      new_value: str,
+                      effective_date: datetime = None,
+                      source: str = 'user_input',
+                      notes: str = None,
+                      recorded_by: str = None) -> str:
+        """
+        Record a change to provider history.
+        
+        Args:
+            provider_id: ID of the provider
+            change_type: Type of change (name_change, ownership_change, dba_change, merger, acquisition)
+            field_name: Field that changed (legal_name, parent_organization, dba_names)
+            old_value: Previous value
+            new_value: New value
+            effective_date: When the change took effect
+            source: Where the information came from
+            notes: Additional context
+            recorded_by: Who recorded the change
+            
+        Returns:
+            history_id
+        """
+        history_id = str(uuid.uuid4())
+        effective_date = effective_date or datetime.utcnow()
+        
+        cur = self.conn.cursor()
+        cur.execute("""
+            INSERT INTO provider_history (
+                id, provider_id, change_type, field_name,
+                old_value, new_value, effective_date,
+                source, notes, recorded_at, recorded_by
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        """, (
+            history_id, provider_id, change_type, field_name,
+            old_value, new_value, effective_date,
+            source, notes, datetime.utcnow(), recorded_by
+        ))
+        
+        result = cur.fetchone()
+        return result[0] if result else history_id
+    
+    def get_provider_history(self, provider_id: str) -> List[Dict]:
+        """
+        Get complete history for a provider.
+        
+        Returns:
+            List of history records, ordered by effective_date desc
+        """
+        cur = self.conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("""
+            SELECT 
+                id, change_type, field_name,
+                old_value, new_value, effective_date,
+                source, notes, recorded_at, recorded_by
+            FROM provider_history
+            WHERE provider_id = %s
+            ORDER BY effective_date DESC, recorded_at DESC
+        """, (provider_id,))
+        
+        return [dict(row) for row in cur.fetchall()]
+    
+    def get_previous_names(self, provider_id: str) -> List[Dict]:
+        """
+        Get all previous legal names and DBAs for a provider.
+        
+        Returns:
+            List of {name, type, effective_date, source}
+        """
+        cur = self.conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("""
+            SELECT 
+                old_value as name,
+                change_type as type,
+                effective_date,
+                source
+            FROM provider_history
+            WHERE provider_id = %s
+              AND change_type IN ('name_change', 'dba_change')
+            ORDER BY effective_date DESC
+        """, (provider_id,))
+        
+        return [dict(row) for row in cur.fetchall()]
+    
+    def get_previous_owners(self, provider_id: str) -> List[Dict]:
+        """
+        Get all previous owners/parent organizations.
+        
+        Returns:
+            List of {owner, effective_date, source, notes}
+        """
+        cur = self.conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("""
+            SELECT 
+                old_value as owner,
+                effective_date,
+                source,
+                notes
+            FROM provider_history
+            WHERE provider_id = %s
+              AND change_type IN ('ownership_change', 'acquisition', 'merger')
+            ORDER BY effective_date DESC
+        """, (provider_id,))
+        
+        return [dict(row) for row in cur.fetchall()]
+    
+    def update_provider_with_history(self,
+                                     provider_id: str,
+                                     field_name: str,
+                                     new_value: str,
+                                     change_type: str,
+                                     effective_date: datetime = None,
+                                     source: str = 'user_input',
+                                     notes: str = None) -> bool:
+        """
+        Update a provider field and automatically record the change to history.
+        
+        Args:
+            provider_id: ID of provider to update
+            field_name: Field to update (legal_name, parent_organization, etc.)
+            new_value: New value for the field
+            change_type: Type of change for history record
+            effective_date: When change took effect
+            source: Source of the information
+            notes: Additional context
+            
+        Returns:
+            True if successful
+        """
+        # Get current value first
+        cur = self.conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute(f"SELECT {field_name} FROM providers WHERE id = %s", (provider_id,))
+        row = cur.fetchone()
+        if not row:
+            return False
+        
+        old_value = row[field_name]
+        
+        # Record to history
+        self.record_history(
+            provider_id=provider_id,
+            change_type=change_type,
+            field_name=field_name,
+            old_value=str(old_value) if old_value else None,
+            new_value=new_value,
+            effective_date=effective_date,
+            source=source,
+            notes=notes
+        )
+        
+        # Update the provider
+        cur.execute(f"""
+            UPDATE providers 
+            SET {field_name} = %s,
+                last_updated = CURRENT_TIMESTAMP
+            WHERE id = %s
+        """, (new_value, provider_id))
+        
+        return True
+    
     def find_provider(
         self,
         name: str,

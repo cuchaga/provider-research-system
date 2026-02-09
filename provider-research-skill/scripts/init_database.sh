@@ -107,6 +107,21 @@ CREATE TABLE IF NOT EXISTS providers (
     raw_npi_data JSONB
 );
 
+-- Provider history table (tracks name and ownership changes)
+CREATE TABLE IF NOT EXISTS provider_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    provider_id UUID REFERENCES providers(id) ON DELETE CASCADE,
+    change_type VARCHAR(50) NOT NULL, -- 'name_change', 'ownership_change', 'dba_change', 'merger', 'acquisition'
+    field_name VARCHAR(100), -- 'legal_name', 'parent_organization', 'dba_names'
+    old_value TEXT,
+    new_value TEXT,
+    effective_date DATE,
+    source TEXT, -- 'user_input', 'web_research', 'npi_registry', etc.
+    notes TEXT,
+    recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    recorded_by TEXT
+);
+
 -- Search history table
 CREATE TABLE IF NOT EXISTS search_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -144,6 +159,12 @@ CREATE INDEX IF NOT EXISTS idx_providers_city_state ON providers(address_city, a
 CREATE INDEX IF NOT EXISTS idx_providers_state ON providers(address_state);
 CREATE INDEX IF NOT EXISTS idx_providers_phone ON providers(phone);
 CREATE INDEX IF NOT EXISTS idx_providers_parent_org ON providers(parent_organization);
+
+-- History table indexes
+CREATE INDEX IF NOT EXISTS idx_history_provider ON provider_history(provider_id);
+CREATE INDEX IF NOT EXISTS idx_history_change_type ON provider_history(change_type);
+CREATE INDEX IF NOT EXISTS idx_history_effective_date ON provider_history(effective_date);
+CREATE INDEX IF NOT EXISTS idx_history_recorded_at ON provider_history(recorded_at);
 
 -- Full-text search index
 CREATE INDEX IF NOT EXISTS idx_providers_name_fts ON providers USING GIN (to_tsvector('english', legal_name));
