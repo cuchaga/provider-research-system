@@ -124,11 +124,15 @@ class ProviderDatabasePostgres:
                            npi: str = None,
                            franchise_id: str = None,
                            parent_organization: str = None,
+                           real_estate_owner: str = None,
                            website: str = None,
                            **kwargs) -> str:
         """
         Simplified method to add a provider with basic fields.
         Use this for quick insertions during web research.
+        
+        Args:
+            real_estate_owner: Owner of the building/property (landlord, property management company)
         """
         provider_id = str(uuid.uuid4())
         name_variations = self._generate_name_variations(legal_name, [])
@@ -139,13 +143,13 @@ class ProviderDatabasePostgres:
                 id, npi, legal_name, name_variations,
                 address_full, address_city, address_state,
                 phone, franchise_id, parent_organization,
-                location_website, created_at, validated_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                real_estate_owner, location_website, created_at, validated_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
         """, (
             provider_id, npi, legal_name, json.dumps(name_variations),
             address, city, state, phone, franchise_id, parent_organization,
-            website, datetime.utcnow(), datetime.utcnow()
+            real_estate_owner, website, datetime.utcnow(), datetime.utcnow()
         ))
         
         result = cur.fetchone()

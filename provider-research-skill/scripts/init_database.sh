@@ -85,6 +85,9 @@ CREATE TABLE IF NOT EXISTS providers (
     franchise_id TEXT,
     provider_type TEXT,
     
+    -- Real Estate
+    real_estate_owner TEXT,
+    
     -- NPI data
     npi_taxonomy_code TEXT,
     npi_taxonomy_desc TEXT,

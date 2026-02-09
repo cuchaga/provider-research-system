@@ -87,6 +87,7 @@ Extract all provider locations mentioned. For each location, extract:
 - Phone number
 - Website/URL
 - Any franchise or location identifiers
+- Real estate owner/landlord (if mentioned: property owner, REIT, building owner, landlord)
 
 Return JSON array:
 [
@@ -99,6 +100,7 @@ Return JSON array:
         "phone": "(123) 456-7890",
         "website": "https://...",
         "franchise_id": "if mentioned",
+        "real_estate_owner": "Property owner/landlord name if mentioned",
         "additional_info": "any other relevant details"
     }}
 ]
@@ -109,6 +111,7 @@ RULES:
 - If multiple locations, return all of them
 - If info is missing, use null
 - Don't make up information
+- Real estate owner is different from parent organization (landlord vs business owner)
 
 Return ONLY valid JSON array."""
     

@@ -562,6 +562,12 @@ class ProviderDatabaseManager:
         
         Args:
             provider_data: Dictionary with provider fields
+                - legal_name: Required
+                - city, state: Required
+                - npi, phone, address, zip: Optional
+                - parent_organization: Business owner/parent company
+                - real_estate_owner: Property owner/landlord
+                - franchise_id, website, dba_names: Optional
         
         Returns:
             Provider ID (UUID)
@@ -574,9 +580,9 @@ class ProviderDatabaseManager:
             INSERT INTO providers (
                 id, npi, legal_name, dba_names, name_variations,
                 address_full, address_city, address_state, address_zip,
-                phone, parent_organization, franchise_id,
+                phone, parent_organization, real_estate_owner, franchise_id,
                 location_website, created_at, validated_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (npi) DO UPDATE SET
                 legal_name = EXCLUDED.legal_name,
                 last_updated = CURRENT_TIMESTAMP
@@ -593,6 +599,7 @@ class ProviderDatabaseManager:
             provider_data.get('zip'),
             provider_data.get('phone'),
             provider_data.get('parent_organization'),
+            provider_data.get('real_estate_owner'),
             provider_data.get('franchise_id'),
             provider_data.get('website'),
             datetime.utcnow(),
