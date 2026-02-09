@@ -542,3 +542,4 @@ provider-research-skill/
 - [ ] Streaming extraction for large pages
 - [ ] Multi-provider comparison in single LLM call
 - [ ] Learning from user corrections
+- [ ] Integration with workflow orchestration for multi-step queries
