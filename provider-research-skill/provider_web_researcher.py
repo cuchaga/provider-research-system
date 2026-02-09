@@ -8,8 +8,9 @@ Purpose:
     Extracts structured data, deduplicates, and validates against NPI.
 
 Capabilities:
-    - Web search and content extraction
+    - Web search and content extraction (real HTTP + BeautifulSoup)
     - LLM-powered data extraction from unstructured content
+    - Historical data extraction (previous names, owners, acquisitions)
     - Smart deduplication (handles edge cases)
     - NPI registry validation and matching
     - Multi-location detection
@@ -26,9 +27,20 @@ Usage:
 
 import json
 import re
+import time
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from datetime import datetime
+from urllib.parse import quote_plus, urljoin
+
+# Web scraping imports
+try:
+    import requests
+    from bs4 import BeautifulSoup
+    SCRAPING_AVAILABLE = True
+except ImportError:
+    SCRAPING_AVAILABLE = False
+    print("Warning: requests/beautifulsoup4 not available. Install with: pip install requests beautifulsoup4")
 
 
 @dataclass
@@ -37,6 +49,7 @@ class ResearchResult:
     provider_name: str
     locations: List[Dict]
     npi_records: List[Dict]
+    historical_data: Dict  # Previous names, owners, acquisitions
     confidence: float
     source_urls: List[str]
     warnings: List[str]
@@ -99,6 +112,50 @@ RULES:
 
 Return ONLY valid JSON array."""
     
+    HISTORY_EXTRACTION_PROMPT = """Extract historical information about this organization from the web content.
+
+WEB CONTENT:
+{web_content}
+
+Look for and extract any historical information such as:
+- Previous business names ("Formerly known as...", "Previously called...")
+- Name changes with dates
+- Previous owners or parent organizations
+- Acquisitions ("Acquired by X in 20XX")
+- Mergers ("Merged with X in 20XX")
+- Ownership changes
+- Company history timeline
+
+Return JSON:
+{{
+    "previous_names": [
+        {{
+            "name": "Old business name",
+            "date": "YYYY-MM-DD or YYYY or null",
+            "type": "legal_name or dba",
+            "notes": "Additional context"
+        }}
+    ],
+    "previous_owners": [
+        {{
+            "owner": "Previous parent organization",
+            "start_date": "YYYY-MM-DD or null",
+            "end_date": "YYYY-MM-DD or null",
+            "change_type": "acquisition, merger, ownership_change",
+            "notes": "Additional context"
+        }}
+    ],
+    "company_history": "Brief timeline summary if available"
+}}
+
+RULES:
+- Only extract information explicitly stated in the content
+- Include dates when mentioned
+- If no historical data found, return empty arrays
+- Don't make assumptions
+
+Return ONLY valid JSON."""
+    
     DEDUPLICATION_PROMPT = """Determine if these are duplicate provider records.
 
 NEW PROVIDER:
@@ -149,18 +206,43 @@ RULES:
 
 Return ONLY valid JSON."""
     
-    def __init__(self, llm_client=None, web_search_fn=None, web_fetch_fn=None):
+    # Web scraping configuration
+    REQUEST_TIMEOUT = 10  # seconds
+    USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    MAX_RETRIES = 2
+    RATE_LIMIT_DELAY = 1.0  # seconds between requests
+    
+    def __init__(self, llm_client=None, web_search_fn=None, use_real_scraping=True):
         """
         Initialize web researcher.
         
         Args:
             llm_client: LLM client for extraction/matching
             web_search_fn: Function to perform web search (returns URLs)
-            web_fetch_fn: Function to fetch web page content
+            use_real_scraping: Whether to use real HTTP requests (default True)
         """
         self.llm_client = llm_client
         self.web_search_fn = web_search_fn
-        self.web_fetch_fn = web_fetch_fn
+        self.use_real_scraping = use_real_scraping and SCRAPING_AVAILABLE
+        self.session = None
+        
+        if self.use_real_scraping:
+            self._init_session()
+    
+    def _init_session(self):
+        """Initialize requests session with proper headers."""
+        if not SCRAPING_AVAILABLE:
+            return
+        
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': self.USER_AGENT,
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1'
+        })
     
     def research(
         self,
@@ -191,20 +273,29 @@ Return ONLY valid JSON."""
         
         # Step 2: Fetch and extract data
         locations = []
+        all_content = []
         for url in urls[:5]:  # Limit to first 5 URLs
             content = self._fetch_content(url)
             if content:
+                all_content.append(content)
                 extracted = self._extract_locations(content)
                 locations.extend(extracted)
+            time.sleep(self.RATE_LIMIT_DELAY)  # Rate limiting
         
         if not locations:
             warnings.append("Could not extract location data from web pages")
-            return self._empty_result(provider_name, warnings)
         
-        # Step 3: Deduplicate locations
+        # Step 3: Extract historical data
+        historical_data = self._extract_historical_data(all_content) if all_content else {
+            'previous_names': [],
+            'previous_owners': [],
+            'company_history': None
+        }
+        
+        # Step 4: Deduplicate locations
         locations = self._deduplicate_locations(locations)
         
-        # Step 4: NPI validation
+        # Step 5: NPI validation
         npi_records = []
         for location in locations:
             npi_data = self._validate_npi(location)
@@ -219,6 +310,7 @@ Return ONLY valid JSON."""
             provider_name=provider_name,
             locations=locations,
             npi_records=npi_records,
+            historical_data=historical_data,
             confidence=confidence,
             source_urls=urls[:5],
             warnings=warnings,
@@ -265,23 +357,110 @@ Return ONLY valid JSON."""
                 f"https://example.com/{provider_name.replace(' ', '-').lower()}/locations"
             ]
     
-    def _fetch_content(self, url: str) -> str:
-        """Fetch web page content."""
-        if self.web_fetch_fn:
-            return self.web_fetch_fn(url)
+    def _fetch_content(self, url: str) -> Optional[str]:
+        """Fetch web page content with real HTTP or simulation."""
+        if self.use_real_scraping:
+            return self._fetch_content_real(url)
         else:
-            # Simulate content
-            return f"Sample content for {url}"
+            # Simulate content for testing
+            return self._simulate_web_content(url)
+    
+    def _fetch_content_real(self, url: str) -> Optional[str]:
+        """Fetch and parse actual web page content."""
+        if not SCRAPING_AVAILABLE or not self.session:
+            return None
+        
+        for attempt in range(self.MAX_RETRIES):
+            try:
+                response = self.session.get(
+                    url,
+                    timeout=self.REQUEST_TIMEOUT,
+                    allow_redirects=True
+                )
+                response.raise_for_status()
+                
+                # Parse HTML and extract text
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # Remove script and style elements
+                for script in soup(["script", "style", "nav", "footer", "header"]):
+                    script.decompose()
+                
+                # Get text
+                text = soup.get_text(separator='\n')
+                
+                # Clean up text
+                lines = (line.strip() for line in text.splitlines())
+                chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+                text = '\n'.join(chunk for chunk in chunks if chunk)
+                
+                # Limit size for LLM
+                if len(text) > 50000:
+                    text = text[:50000] + "\n[Content truncated...]"
+                
+                return text
+                
+            except requests.Timeout:
+                if attempt < self.MAX_RETRIES - 1:
+                    time.sleep(1)
+                    continue
+                print(f"Timeout fetching {url}")
+                return None
+                
+            except requests.RequestException as e:
+                print(f"Error fetching {url}: {e}")
+                return None
+        
+        return None
+    
+    def _simulate_web_content(self, url: str) -> str:
+        """Generate simulated web content for testing."""
+        return f"""About Us - Sample Provider
+        
+Welcome to Sample Provider Home Care Services
+
+We have been serving the community since 2010.
+
+Our Locations:
+- 123 Main Street, Boston, MA 02101
+- Phone: (617) 555-0100
+- Email: info@sampleprovider.com
+
+Company History:
+Formerly known as ABC Home Services until 2015.
+Acquired by National Care Partners in 2020.
+
+Services: In-home care, companionship, meal preparation.
+"""
     
     def _extract_locations(self, content: str) -> List[Dict]:
-        """Extract provider locations from web content."""
+        """Extract provider locations from web content using LLM."""
         if self.llm_client:
-            prompt = self.EXTRACTION_PROMPT.format(web_content=content[:5000])
+            prompt = self.EXTRACTION_PROMPT.format(web_content=content[:8000])
             response = self._call_llm(prompt, max_tokens=2000)
             return self._parse_extraction_response(response)
         else:
             # Simulate extraction
             return self._simulate_extraction(content)
+    
+    def _extract_historical_data(self, contents: List[str]) -> Dict:
+        """Extract historical information from web content."""
+        # Combine all content (limited)
+        combined_content = '\n\n---PAGE BREAK---\n\n'.join(
+            content[:5000] for content in contents[:3]
+        )
+        
+        if self.llm_client:
+            prompt = self.HISTORY_EXTRACTION_PROMPT.format(web_content=combined_content)
+            response = self._call_llm(prompt, max_tokens=1500)
+            return self._parse_json_response(response) or {
+                'previous_names': [],
+                'previous_owners': [],
+                'company_history': None
+            }
+        else:
+            # Simulate historical data extraction
+            return self._simulate_historical_extraction(combined_content)
     
     def _deduplicate_locations(self, locations: List[Dict]) -> List[Dict]:
         """Remove duplicate locations from list."""
@@ -456,15 +635,55 @@ Return ONLY valid JSON."""
     
     def _simulate_extraction(self, content: str) -> List[Dict]:
         """Simulate data extraction for testing."""
-        return [{
+        # Try to extract basic info from simulated content
+        locations = []
+        
+        # Simple regex patterns
+        phone_pattern = r'\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}'
+        email_pattern = r'[\w.-]+@[\w.-]+\.[\w]+'
+        
+        phone_match = re.search(phone_pattern, content)
+        email_match = re.search(email_pattern, content)
+        
+        locations.append({
             'name': 'Sample Provider',
             'address': '123 Main St',
             'city': 'Boston',
             'state': 'MA',
             'zip': '02101',
-            'phone': '(617) 555-0100',
+            'phone': phone_match.group(0) if phone_match else '(617) 555-0100',
             'website': 'https://example.com'
-        }]
+        })
+        
+        return locations
+    
+    def _simulate_historical_extraction(self, content: str) -> Dict:
+        """Simulate historical data extraction for testing."""
+        historical = {
+            'previous_names': [],
+            'previous_owners': [],
+            'company_history': None
+        }
+        
+        # Look for common patterns
+        if 'formerly known as' in content.lower() or 'previously called' in content.lower():
+            historical['previous_names'].append({
+                'name': 'ABC Home Services',
+                'date': '2015',
+                'type': 'legal_name',
+                'notes': 'Found in company history'
+            })
+        
+        if 'acquired by' in content.lower():
+            historical['previous_owners'].append({
+                'owner': 'National Care Partners',
+                'start_date': None,
+                'end_date': '2020',
+                'change_type': 'acquisition',
+                'notes': 'Acquired in 2020'
+            })
+        
+        return historical
     
     def _empty_result(self, provider_name: str, warnings: List[str]) -> ResearchResult:
         """Create empty research result."""
@@ -472,8 +691,14 @@ Return ONLY valid JSON."""
             provider_name=provider_name,
             locations=[],
             npi_records=[],
+            historical_data={'previous_names': [], 'previous_owners': [], 'company_history': None},
             confidence=0.0,
             source_urls=[],
             warnings=warnings,
             research_timestamp=datetime.utcnow().isoformat()
         )
+    
+    def close(self):
+        """Close requests session."""
+        if self.session:
+            self.session.close()
