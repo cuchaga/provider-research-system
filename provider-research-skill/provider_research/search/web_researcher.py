@@ -16,7 +16,9 @@ Capabilities:
     - Multi-location detection
 
 Usage:
-    from provider_web_researcher import ProviderWebResearcher
+    from provider_research.search.web_researcher import ProviderWebResearcher
+    # Or use the package-level import:
+    from provider_research import ProviderWebResearcher
     
     researcher = ProviderWebResearcher()
     results = researcher.research(

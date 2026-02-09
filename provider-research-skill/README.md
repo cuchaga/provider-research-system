@@ -16,6 +16,19 @@ This skill enables Claude to research, validate, and manage healthcare provider 
 - **📊 Smart Data Extraction** - Extracts structured data from unstructured web content
 - **🔄 Intelligent Deduplication** - Handles edge cases like same address/different suite
 - **🏥 NPI Registry Integration** - Matches providers to official NPI records
+- **⚡ Standalone Tools** - CLI utilities for data enrichment, database setup, and search (no LLM required)
+
+## Two Ways to Use
+
+### 1. LLM-Integrated (Conversational)
+Use with Claude AI for natural language provider research with intelligent query interpretation and multi-step reasoning.
+
+### 2. Standalone Pipeline (Batch Processing)
+Command-line tools for:
+- Bulk data enrichment via web scraping
+- PostgreSQL database setup and management  
+- Provider data import and validation
+- Fast CLI-based search with full-text capabilities
 
 ## Architecture
 
@@ -106,28 +119,37 @@ This skill enables Claude to research, validate, and manage healthcare provider 
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/provider-research-skill.git
-cd provider-research-skill
+git clone https://github.com/cuchaga/provider-research-system.git
+cd provider-research-system/provider-research-skill
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Set up PostgreSQL database
-sudo -u postgres createdb providers
-sudo -u postgres psql -c "CREATE USER provider_admin WITH PASSWORD 'provider123';"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE providers TO provider_admin;"
+# Set up PostgreSQL database (automated)
+chmod +x scripts/setup_postgres.sh
+./scripts/setup_postgres.sh
 
-# Initialize schema
-python3 -c "from provider_database_postgres import ProviderDatabasePostgres; db = ProviderDatabasePostgres(); print('Database ready')"
+# Or manual PostgreSQL setup
+createdb providers
+createuser provider_admin -P  # Enter password: provider123
+psql -d providers -c "GRANT ALL PRIVILEGES ON DATABASE providers TO provider_admin;"
+
+# Initialize database schema
+python3 setup_postgres_schema.py
+
+# (Optional) Import sample data
+python3 import_to_postgres.py
 ```
 
 ## Usage
 
-### Basic Search
+### Option 1: LLM-Integrated Research (Conversational)
 
 ```python
-from provider_research_llm import ProviderResearchLLM
-from provider_database_postgres import ProviderDatabasePostgres
+from provider_research import ProviderResearchLLM, ProviderDatabasePostgres
+# or
+from provider_research.core import ProviderResearchLLM
+from provider_research.database import ProviderDatabasePostgres
 
 db = ProviderDatabasePostgres()
 research = ProviderResearchLLM(db=db)
@@ -170,6 +192,121 @@ unique, report = research.deduplicate_locations(raw_locations)
 # Layer 5: NPI matching only
 npi_match = research.match_to_npi(provider_info, npi_search_results)
 ```
+
+---
+
+### Option 2: Standalone Tools (Data Pipeline)
+
+#### 1. Enrich & Deduplicate Provider Data
+
+Process provider data through web research and smart deduplication:
+
+```bash
+python3 -m tools.enrich_and_deduplicate
+# or from tools directory:
+cd tools && python3 enrich_and_deduplicate.py
+```
+
+**Features:**
+- Classifies healthcare providers vs real estate companies
+- Web scrapes for missing information (NPI, addresses, phones, websites)
+- Smart deduplication using phone and address matching
+- Detects relationships (parent companies, DBAs, franchises)
+- Outputs cleaned data to `data/db_state_cleaned.json`
+
+**Configuration:**
+```python
+# Edit tools/enrich_and_deduplicate.py to enable real web scraping
+researcher = ProviderWebResearcher(use_real_scraping=True)  # Line 36
+```
+
+#### 2. Setup PostgreSQL Database
+
+Automated setup (macOS with Homebrew):
+
+```bash
+chmod +x scripts/setup_postgres.sh
+./scripts/setup_postgres.sh
+```
+
+Create optimized schema with full-text search:
+
+```bash
+python3 -m tools.setup_postgres_schema
+# or
+cd tools && python3 setup_postgres_schema.py
+```
+
+**Creates:**
+- `providers` table (31 columns, 8 indexes)
+- `search_history` table (query tracking)
+- `provider_history` table (change tracking)
+- Full-text search with auto-updating tsvector
+- Optimized indexes for name, NPI, phone, location searches
+
+#### 3. Import Provider Data
+
+Import cleaned JSON data into PostgreSQL:
+
+```bash
+python3 -m tools.import_to_postgres
+# or
+cd tools && python3 import_to_postgres.py
+```
+
+**Handles:**
+- Data validation and sanitization
+- NPI placeholder filtering
+- JSONB serialization for complex fields
+- Duplicate detection
+
+#### 4. Search Providers (CLI)
+
+Interactive search:
+
+```bash
+python3 -m tools.search_postgres
+# or
+cd tools && python3 search_postgres.py
+```
+
+Search with query:
+
+```bash
+# Basic search
+python3 -m tools.search_postgres "Home Instead"
+
+# Search in specific state
+python3 -m tools.search_postgres "Comfort Keepers" MI
+
+# Full-text search across all fields
+python3 -m tools.search_postgres "senior care" --fulltext
+```
+
+**Search Features:**
+- Full-text search with relevance ranking
+- Pattern matching (ILIKE)
+- State and city filtering
+- Shows: legal name, DBAs, address, phone, parent org, franchise ID
+
+**Example Output:**
+```
+Found 2 providers matching "Home Instead":
+
+1. Home Instead - Metrowest
+   DBAs: Home Instead Senior Care
+   Address: 89 Linden St, Suite 200, Wellesley, MA 02482
+   Phone: (781) 555-0123
+   Website: https://homeinstead.com/metrowest
+   Parent: Home Instead, Inc.
+   
+2. Home Instead Senior Care of Boston
+   Address: 120 Beacon St, Boston, MA 02116
+   Phone: (617) 555-0456
+   ...
+```
+
+---
 
 ## Database Schema
 

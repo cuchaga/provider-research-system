@@ -19,7 +19,7 @@ Orchestrator:
 
 RECOMMENDED USAGE (v2.0.0):
 --------------------------
-    from provider_research_skill import ProviderOrchestrator
+    from provider_research import ProviderOrchestrator
     
     orchestrator = ProviderOrchestrator(db_config, llm_client)
     result = orchestrator.process_query(
@@ -29,7 +29,7 @@ RECOMMENDED USAGE (v2.0.0):
 
 LEGACY USAGE (v1.0.0 - Still Supported):
 ----------------------------------------
-    from provider_research_skill import ProviderResearchLLM, ProviderDatabasePostgres
+    from provider_research import ProviderResearchLLM, ProviderDatabasePostgres
     
     db = ProviderDatabasePostgres()
     research = ProviderResearchLLM(db=db)
@@ -41,33 +41,33 @@ LEGACY USAGE (v1.0.0 - Still Supported):
 """
 
 # MAIN ORCHESTRATOR (v2.0.0 - Recommended)
-from .provider_orchestrator import (
+from .core.orchestrator import (
     ProviderOrchestrator,
     OrchestrationResult,
     ExecutionPath
 )
 
 # INDIVIDUAL SKILLS (for direct access)
-from .provider_query_interpreter import (
+from .core.query_interpreter import (
     ProviderQueryInterpreter,
     Intent,
 )
-from .provider_database_manager import (
+from .database.manager import (
     ProviderDatabaseManager,
     SearchResult as DatabaseSearchResult,
 )
-from .provider_semantic_matcher import (
+from .core.semantic_matcher import (
     ProviderSemanticMatcher,
     SemanticMatch,
 )
-from .provider_web_researcher import (
+from .search.web_researcher import (
     ProviderWebResearcher,
     ResearchResult,
     DeduplicationResult,
 )
 
 # LEGACY MODULES (v1.0.0 - Backward Compatibility)
-from .provider_research_llm import (
+from .core.research_llm import (
     ProviderResearchLLM,
     ParsedQuery,
     Intent,
@@ -75,9 +75,9 @@ from .provider_research_llm import (
     ExtractionResult,
 )
 
-from .provider_database_postgres import ProviderDatabasePostgres
-from .provider_database_sqlite import ProviderDatabase as ProviderDatabaseSQLite
-from .provider_search import fuzzy_search, search_providers, display_results
+from .database.postgres import ProviderDatabasePostgres
+from .database.sqlite import ProviderDatabaseSQLite
+from .search.provider_search import search_providers, display_results
 
 __version__ = "2.0.0"  # Multi-skill architecture
 __author__ = "Your Name"
@@ -112,7 +112,6 @@ __all__ = [
     "ExtractionResult",
     
     # Functions
-    "fuzzy_search",
     "search_providers",
     "display_results",
 ]

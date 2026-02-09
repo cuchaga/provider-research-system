@@ -9,7 +9,9 @@ Adds intelligent layers to the provider research workflow:
 - Layer 5: NPI Matching Intelligence (fuzzy business name matching)
 
 Usage:
-    from provider_research_llm import ProviderResearchLLM
+    from provider_research.core.research_llm import ProviderResearchLLM
+    # Or use the package-level import:
+    from provider_research import ProviderResearchLLM
     
     research = ProviderResearchLLM(db_config, anthropic_api_key)
     result = research.process_query(
@@ -823,7 +825,7 @@ def create_research_system(db_config: Dict = None, api_key: str = None) -> Provi
     """
     db = None
     if db_config:
-        from provider_database_postgres import ProviderDatabasePostgres
+        from ..database.postgres import ProviderDatabasePostgres
         db = ProviderDatabasePostgres(db_config)
     
     llm_client = None
@@ -860,6 +862,6 @@ if __name__ == "__main__":
     print("  - 'Find healthcare providers at the GCP REIT properties'")
     print()
     print("Usage:")
-    print("  from provider_research_llm import ProviderResearchLLM")
+    print("  from provider_research import ProviderResearchLLM")
     print("  research = ProviderResearchLLM(db=db_connection)")
     print("  result = research.process_query('Find Home Instead in Boston')")

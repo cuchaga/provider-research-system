@@ -15,7 +15,7 @@ Capabilities:
     - Context-aware matching
 
 Usage:
-    from provider_semantic_matcher import ProviderSemanticMatcher
+    from provider_research import ProviderSemanticMatcher
     
     matcher = ProviderSemanticMatcher()
     matches = matcher.match(

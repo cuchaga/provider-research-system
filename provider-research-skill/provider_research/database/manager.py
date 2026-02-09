@@ -15,7 +15,7 @@ Capabilities:
     - Analytics and stats
 
 Usage:
-    from provider_database_manager import ProviderDatabaseManager
+    from provider_research import ProviderDatabaseManager
     
     db = ProviderDatabaseManager(config)
     results = db.search(query="Home Instead", state="MA")

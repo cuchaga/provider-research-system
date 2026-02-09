@@ -16,7 +16,7 @@ Architecture:
     Orchestrator: Coordinates flow, manages state, provides unified interface
 
 Usage:
-    from provider_orchestrator import ProviderOrchestrator
+    from provider_research import ProviderOrchestrator
     
     orchestrator = ProviderOrchestrator(db_config, api_key)
     result = orchestrator.process_query(
@@ -32,10 +32,10 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 from enum import Enum
 
-from provider_query_interpreter import ProviderQueryInterpreter, Intent, ParsedQuery
-from provider_database_manager import ProviderDatabaseManager, SearchResult
-from provider_semantic_matcher import ProviderSemanticMatcher, SemanticMatch
-from provider_web_researcher import ProviderWebResearcher, ResearchResult, DeduplicationResult
+from ..core.query_interpreter import ProviderQueryInterpreter, Intent, ParsedQuery
+from ..database.manager import ProviderDatabaseManager, SearchResult
+from ..core.semantic_matcher import ProviderSemanticMatcher, SemanticMatch
+from ..search.web_researcher import ProviderWebResearcher, ResearchResult, DeduplicationResult
 
 
 class ExecutionPath(Enum):

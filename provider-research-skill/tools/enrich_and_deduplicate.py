@@ -20,11 +20,11 @@ from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 from collections import defaultdict
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent))
+# Add parent directory to path for package imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from provider_web_researcher import ProviderWebResearcher
-from provider_database_manager import ProviderDatabaseManager
+from provider_research.search.web_researcher import ProviderWebResearcher
+from provider_research.database.manager import ProviderDatabaseManager
 
 
 class ProviderEnrichmentPipeline:

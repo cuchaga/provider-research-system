@@ -10,19 +10,14 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="provider-research-skill",
-    version="1.0.0",
+    version="2.0.0",
     author="Your Name",
     author_email="your.email@example.com",
     description="LLM-enhanced healthcare provider research system for Claude AI",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/yourusername/provider-research-skill",
-    py_modules=[
-        "provider_research_llm",
-        "provider_database_postgres",
-        "provider_database_sqlite",
-        "provider_search",
-    ],
+    packages=find_packages(),
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",

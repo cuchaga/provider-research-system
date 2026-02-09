@@ -39,13 +39,29 @@ Research, validate, and manage healthcare provider data using a multi-layer inte
 |--------|------|---------|
 | **ProviderResearchLLM** | `provider_research_llm.py` | Main orchestrator with LLM layers |
 | **ProviderDatabasePostgres** | `provider_database_postgres.py` | Database operations |
-| **FuzzySearch** | `provider_search.py` | Rule-based string matching |
+| **FuzzySearch** | `provider_search.py` | Rule-based string matching || **ProviderWebResearcher** | `provider_web_researcher.py` | Web scraping and data extraction |
+| **ProviderOrchestrator** | `provider_orchestrator.py` | Query routing and coordination |
+| **ProviderQueryInterpreter** | `provider_query_interpreter.py` | Intent parsing and validation |
+| **ProviderSemanticMatcher** | `provider_semantic_matcher.py` | Semantic search and matching |
 
+### 2.4 Standalone Utilities
+
+| Utility | File | Purpose | Dependencies |
+|---------|------|---------|-------------|
+| **Data Enrichment Pipeline** | `enrich_and_deduplicate.py` | Enrich provider data via web research, classify healthcare vs real estate, smart deduplication | ProviderWebResearcher, ProviderDatabaseManager |
+| **PostgreSQL Schema Setup** | `setup_postgres_schema.py` | Create database tables, indexes, full-text search triggers | psycopg2 |
+| **Data Import Tool** | `import_to_postgres.py` | Import JSON provider data to PostgreSQL | psycopg2 |
+| **CLI Search Interface** | `search_postgres.py` | Command-line provider search with full-text and fuzzy matching | psycopg2 |
+| **PostgreSQL Setup Script** | `scripts/setup_postgres.sh` | Automated PostgreSQL installation and configuration | Homebrew (macOS) |
 ---
 
-## 3. PROCESS STAGES
+## 3. WORKFLOWS
 
-### Stage 1: Query Reception
+### Workflow A: LLM-Integrated Research (Interactive)
+
+This is the primary workflow for conversational provider research with Claude AI.
+
+#### Stage 1: Query Reception
 ```
 Input: Raw user query + conversation history + user context
 Output: Validated input ready for processing
@@ -314,9 +330,150 @@ Output: Formatted response to user
 
 ---
 
+### Workflow B: Standalone Data Pipeline (Batch Processing)
+
+This workflow operates independently of the LLM system for bulk data enrichment and database management.
+
+#### Pipeline Stage 1: Data Enrichment
+```bash
+python3 -m tools.enrich_and_deduplicate
+# or: cd tools && python3 enrich_and_deduplicate.py
+```
+
+**Purpose:** Enrich existing provider data through web research and classification
+
+**Components Used:**
+- `ProviderWebResearcher` - Web scraping
+- `ProviderDatabaseManager` - Data access
+- JSON data files (`data/db_state.json`)
+
+**Actions:**
+1. Load providers from JSON database
+2. Classify providers (healthcare vs real estate)
+3. For each healthcare provider:
+   - Search web for official information
+   - Extract: NPI, addresses, phone, website, services
+   - Validate and normalize data
+4. For real estate companies:
+   - Move to `real_estate_companies` field of related providers
+5. Smart deduplication:
+   - Phone-based matching
+   - Address normalization
+   - Relationship detection (franchise/parent/DBA)
+6. Merge duplicates intelligently:
+   - Preserve best business name
+   - Consolidate DBAs
+   - Link parent organizations
+7. Output cleaned data to `data/db_state_cleaned.json`
+
+**Deduplication Logic:**
+- Same phone + related → Merge
+- Same address, different suite → Keep separate (unless phone matches)
+- Franchise relationships → Preserve hierarchy
+
+---
+
+#### Pipeline Stage 2: Database Setup
+```bash
+./scripts/setup_postgres.sh
+python3 -m tools.setup_postgres_schema
+```
+
+**Purpose:** Initialize PostgreSQL database with optimized schema
+
+**Components Used:**
+- PostgreSQL 16
+- `setup_postgres_schema.py` - Schema creator
+
+**Actions:**
+1. Install PostgreSQL (if needed)
+2. Create database and user
+3. Create tables:
+   - `providers` - Main provider data (31 columns)
+   - `search_history` - Search tracking
+   - `provider_history` - Historical changes
+4. Create indexes:
+   - NPI (unique)
+   - Legal name (B-tree)
+   - Phone (B-tree)
+   - State/City (composite)
+   - Search vector (GIN for full-text)
+5. Configure full-text search:
+   - tsvector column with auto-update trigger
+   - Searches across name, address, city, services
+6. Set up triggers for automatic search vector updates
+
+---
+
+#### Pipeline Stage 3: Data Import
+```bash
+python3 -m tools.import_to_postgres
+```
+
+**Purpose:** Import enriched JSON data into PostgreSQL
+
+**Components Used:**
+- `import_to_postgres.py` - Import tool
+- Cleaned JSON data
+
+**Actions:**
+1. Connect to PostgreSQL database
+2. Read `data/db_state_cleaned.json`
+3. For each provider:
+   - Validate data integrity
+   - Filter placeholder NPIs (simulation mode)
+   - Serialize JSONB fields (raw_search_data)
+   - Insert into `providers` table
+4. Report import statistics
+5. Handle conflicts (skip duplicates)
+
+**Data Validation:**
+- NPI: Filter test values (1234567890 → NULL)
+- Arrays: Convert Python lists to PostgreSQL arrays
+- JSONB: Serialize raw research data
+- Nulls: Handle missing optional fields
+
+---
+
+#### Pipeline Stage 4: Search & Query
+```bash
+python3 -m tools.search_postgres "provider_name" [STATE]
+```
+
+**Purpose:** Search providers via command-line interface
+
+**Components Used:**
+- `search_postgres.py` - CLI search
+- PostgreSQL full-text search
+
+**Search Methods:**
+1. **Full-Text Search** (default)
+   - Uses tsvector/tsquery
+   - Ranks by relevance (ts_rank)
+   - Supports multiple terms
+
+2. **Pattern Matching** (fallback)
+   - ILIKE for partial matches
+   - Case-insensitive
+   - Wildcard support
+
+3. **State/City Filtering**
+   - Exact match on state code
+   - Optional city filter
+
+**Output:**
+- Legal name, DBA names
+- Full address
+- Phone, website
+- Parent organization
+- Franchise ID
+- Match relevance score
+
+---
+
 ## 4. FLOW DIAGRAMS
 
-### 4.1 Main Process Flow
+### 4.1 LLM-Integrated Research Flow
 
 ```
 ┌──────────────┐

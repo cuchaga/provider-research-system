@@ -13,12 +13,11 @@ from difflib import SequenceMatcher
 try:
     import psycopg2
     from psycopg2.extras import RealDictCursor
+    HAS_PSYCOPG2 = True
 except ImportError:
-    print("Installing psycopg2...")
-    import subprocess
-    subprocess.run(["pip", "install", "psycopg2-binary", "--break-system-packages"], check=True)
-    import psycopg2
-    from psycopg2.extras import RealDictCursor
+    psycopg2 = None
+    RealDictCursor = None
+    HAS_PSYCOPG2 = False
 
 
 class ProviderDatabasePostgres:

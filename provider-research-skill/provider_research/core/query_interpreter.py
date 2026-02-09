@@ -15,7 +15,7 @@ Capabilities:
     - Ambiguity detection and clarification requests
 
 Usage:
-    from provider_query_interpreter import ProviderQueryInterpreter
+    from provider_research import ProviderQueryInterpreter
     
     interpreter = ProviderQueryInterpreter()
     result = interpreter.interpret(

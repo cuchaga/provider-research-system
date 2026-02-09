@@ -1,0 +1,131 @@
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#8B5CF6', 'primaryTextColor': '#fff', 'primaryBorderColor': '#7C3AED', 'lineColor': '#F59E0B', 'secondaryColor': '#10B981', 'tertiaryColor': '#1F2937'}}}%%
+
+flowchart TB
+    subgraph WORKFLOWS["🔀 TWO WORKFLOWS"]
+        WF_LLM["Workflow A:<br/>LLM-Integrated<br/>(Conversational)"]
+        WF_STANDALONE["Workflow B:<br/>Standalone Pipeline<br/>(Batch Processing)"]
+    end
+
+    %% LLM-Integrated Workflow
+    subgraph LLM_FLOW["💬 LLM-INTEGRATED RESEARCH"]
+        direction TB
+        
+        subgraph INPUT["📥 INPUT"]
+            USER[/"👤 User Query"/]
+            CTX[("🧠 Context<br/>• History<br/>• Location")]
+        end
+
+        subgraph LAYER0["🔮 LAYER 0: INTERPRETATION"]
+            L0_PARSE["Parse Intent"]
+            L0_RESOLVE["Resolve References"]
+        end
+
+        subgraph LAYER1["⚡ LAYER 1: DB SEARCH"]
+            L1_SEARCH["Exact/Fuzzy/FTS"]
+            L1_CHECK{"Found?"}
+        end
+
+        subgraph LAYER2["🧩 LAYER 2: SEMANTIC"]
+            L2_MATCH["Abbreviations<br/>Parent/DBA"]
+            L2_CHECK{"Match?"}
+        end
+
+        subgraph LAYER3["🌐 LAYER 3: WEB"]
+            L3_RESEARCH["Web Research<br/>& Extract"]
+        end
+
+        subgraph LAYER4["🔄 LAYER 4: DEDUP"]
+            L4_DEDUP["Smart<br/>Deduplication"]
+        end
+
+        subgraph LAYER5["✅ LAYER 5: NPI"]
+            L5_VALIDATE["NPI<br/>Validation"]
+        end
+
+        USER --> L0_PARSE
+        CTX -.-> L0_PARSE
+        L0_PARSE --> L0_RESOLVE
+        L0_RESOLVE --> L1_SEARCH
+        L1_SEARCH --> L1_CHECK
+        L1_CHECK -->|Yes| RESULT_LLM
+        L1_CHECK -->|No| L2_MATCH
+        L2_MATCH --> L2_CHECK
+        L2_CHECK -->|Yes| RESULT_LLM
+        L2_CHECK -->|No| L3_RESEARCH
+        L3_RESEARCH --> L4_DEDUP
+        L4_DEDUP --> L5_VALIDATE
+        L5_VALIDATE --> DB1
+        DB1 --> RESULT_LLM
+    end
+
+    %% Standalone Pipeline Workflow
+    subgraph STANDALONE_FLOW["⚙️ STANDALONE DATA PIPELINE"]
+        direction TB
+        
+        subgraph STAGE1["📦 STAGE 1: ENRICHMENT"]
+            S1_LOAD["Load JSON Data<br/>data/db_state.json"]
+            S1_CLASSIFY["Classify Providers<br/>Healthcare vs RE"]
+            S1_WEB["Web Research<br/>Missing Data"]
+            S1_DEDUP["Smart Deduplication<br/>Phone/Address"]
+            S1_OUTPUT["Output Cleaned<br/>JSON"]
+        end
+
+        subgraph STAGE2["🗄️ STAGE 2: DB SETUP"]
+            S2_INSTALL["Install PostgreSQL<br/>(setup_postgres.sh)"]
+            S2_SCHEMA["Create Schema<br/>(setup_postgres_schema.py)"]
+            S2_TABLES["Tables + Indexes<br/>+ Full-Text Search"]
+        end
+
+        subgraph STAGE3["📥 STAGE 3: IMPORT"]
+            S3_VALIDATE["Validate & Filter<br/>Data"]
+            S3_IMPORT["Import to PostgreSQL<br/>(import_to_postgres.py)"]
+        end
+
+        subgraph STAGE4["🔍 STAGE 4: SEARCH"]
+            S4_CLI["CLI Search Interface<br/>(search_postgres.py)"]
+            S4_FTS["Full-Text Search<br/>Pattern Match"]
+        end
+
+        S1_LOAD --> S1_CLASSIFY
+        S1_CLASSIFY --> S1_WEB
+        S1_WEB --> S1_DEDUP
+        S1_DEDUP --> S1_OUTPUT
+        S1_OUTPUT --> S3_VALIDATE
+
+        S2_INSTALL --> S2_SCHEMA
+        S2_SCHEMA --> S2_TABLES
+        S2_TABLES --> S3_IMPORT
+
+        S3_VALIDATE --> S3_IMPORT
+        S3_IMPORT --> DB2
+        DB2 --> S4_CLI
+        S4_CLI --> S4_FTS
+        S4_FTS --> RESULT_STANDALONE
+    end
+
+    %% Storage Layer
+    subgraph STORAGE["💾 POSTGRESQL DATABASE"]
+        DB1[("providers<br/>search_history<br/>provider_history")]
+        DB2[("providers<br/>search_history<br/>provider_history")]
+    end
+
+    %% Output
+    subgraph OUTPUT_LAYER["📤 OUTPUT"]
+        RESULT_LLM[/"📋 LLM Results<br/>Conversational"/]
+        RESULT_STANDALONE[/"📋 CLI Results<br/>Structured"/]
+    end
+
+    DB1 -.Same Database.-> DB2
+
+    %% Styling
+    classDef workflowStyle fill:#8B5CF6,stroke:#7C3AED,color:#fff,stroke-width:3px
+    classDef llmStyle fill:#3B82F6,stroke:#1D4ED8,color:#fff
+    classDef standaloneStyle fill:#10B981,stroke:#059669,color:#fff
+    classDef storageStyle fill:#6366F1,stroke:#4F46E5,color:#fff
+    classDef outputStyle fill:#22C55E,stroke:#16A34A,color:#fff
+
+    class WF_LLM,WF_STANDALONE workflowStyle
+    class USER,CTX,L0_PARSE,L0_RESOLVE,L1_SEARCH,L2_MATCH,L3_RESEARCH,L4_DEDUP,L5_VALIDATE llmStyle
+    class S1_LOAD,S1_CLASSIFY,S1_WEB,S1_DEDUP,S1_OUTPUT,S2_INSTALL,S2_SCHEMA,S2_TABLES,S3_VALIDATE,S3_IMPORT,S4_CLI,S4_FTS standaloneStyle
+    class DB1,DB2 storageStyle
+    class RESULT_LLM,RESULT_STANDALONE outputStyle
