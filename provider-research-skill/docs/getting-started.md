@@ -84,7 +84,9 @@ for provider in result.providers:
 
 ### Database Configuration
 
-Create `config/database/sqlite.yml` (see `config/database/sqlite.example.yml` for template):
+Create your database config file from the provided template:
+
+**For SQLite** (copy from config/database/sqlite.example.yml):
 
 ```yaml
 database:
@@ -93,7 +95,7 @@ database:
     path: data/providers.db
 ```
 
-Or `config/database/postgres.yml` (see `config/database/postgres.example.yml` for template):
+**For PostgreSQL** (copy from config/database/postgres.example.yml):
 
 ```yaml
 database:

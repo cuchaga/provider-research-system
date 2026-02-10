@@ -215,8 +215,14 @@ result = orchestrator.process_query(
 
 ### If Validating/Testing:
 1. **Run all tests**: `pytest tests/ -v`
-2. **Check integrity**: `python tests/test_file_and_import_integrity.py`
-3. **Try examples**: `python examples/basic_usage.py`
+2. **Check integrity** by running the test script:
+   ```bash
+   python3 tests/test_file_and_import_integrity.py
+   ```
+3. **Try examples** by running:
+   ```bash
+   python3 examples/basic_usage.py
+   ```
 4. **Test with PostgreSQL** - Requires database setup
 
 ### If Deploying:

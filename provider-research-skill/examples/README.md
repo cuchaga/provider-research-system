@@ -40,7 +40,10 @@ jupyter notebook examples/notebooks/
 Make sure you have:
 1. Installed the package: `pip install -e .`
 2. Set up your environment variables (copy `config/.env.example` to `.env`)
-3. Initialized the database (run `python tools/database/setup_postgres_schema.py`)
+3. Initialized the database by running:
+   ```bash
+   python3 tools/database/setup_postgres_schema.py
+   ```
 
 ## Support
 

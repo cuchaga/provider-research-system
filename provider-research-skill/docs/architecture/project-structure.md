@@ -41,7 +41,7 @@ provider-research-skill/
 ├── setup.py                        # Package installation
 ├── requirements.txt                # Python dependencies
 ├── README.md                       # Main documentation
-├── ARCHITECTURE.md                 # Detailed architecture
+├── ARCHITECTURE.md                 # (moved to docs/architecture/overview.md)
 ├── POSTGRES_SETUP.md              # PostgreSQL setup guide
 └── LICENSE                         # MIT License
 ```
