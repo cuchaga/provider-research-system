@@ -54,26 +54,26 @@
 
 **Refactored monolithic system into 4 specialized skills + orchestrator:**
 
-1. **Skill 1: Provider Query Interpreter** (`core/query_interpreter.py`)
+1. **Skill 1: Provider Query Interpreter** (`provider_research/core/query_interpreter.py`)
    - Natural language understanding & intent classification
    - Pronoun resolution, entity extraction
    - ~354 lines, ~800 tokens
 
-2. **Skill 2: Provider Database Manager** (`database/manager.py`)
+2. **Skill 2: Provider Database Manager** (`provider_research/database/manager.py`)
    - Fast rule-based search (exact, fuzzy, full-text)
    - CRUD operations, zero token cost
    - ~680 lines
 
-3. **Skill 3: Provider Semantic Matcher** (`core/semantic_matcher.py`)
+3. **Skill 3: Provider Semantic Matcher** (`provider_research/core/semantic_matcher.py`)
    - Abbreviation expansion (CK → Comfort Keepers)
    - Parent/subsidiary matching
    - ~327 lines, ~500 tokens
 
-4. **Skill 4: Provider Web Researcher** (`search/web_researcher.py`)
+4. **Skill 4: Provider Web Researcher** (`provider_research/search/web_researcher.py`)
    - Web search, data extraction, deduplication, NPI validation
    - ~710 lines, ~5K tokens
 
-5. **Orchestrator** (`core/orchestrator.py`)
+5. **Orchestrator** (`provider_research/core/orchestrator.py`)
    - Coordinates all 4 skills
    - Manages conversation state & context
    - Token optimization via short-circuiting

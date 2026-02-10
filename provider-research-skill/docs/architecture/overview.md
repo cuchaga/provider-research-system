@@ -37,14 +37,14 @@ Research, validate, and manage healthcare provider data using a multi-layer inte
 
 | Module | File | Purpose |
 |--------|------|---------|
-| **ProviderResearchLLM** | `core/research_llm.py` | Legacy v1.0 orchestrator with LLM layers |
-| **ProviderOrchestrator** | `core/orchestrator.py` | v2.0 query routing and coordination |
-| **ProviderQueryInterpreter** | `core/query_interpreter.py` | Intent parsing and validation |
-| **ProviderSemanticMatcher** | `core/semantic_matcher.py` | Semantic search and matching |
-| **ProviderDatabaseManager** | `database/manager.py` | Database operations (v2.0) |
-| **ProviderDatabasePostgres** | `database/postgres.py` | PostgreSQL backend (v1.0) |
-| **ProviderWebResearcher** | `search/web_researcher.py` | Web scraping and data extraction |
-| **FuzzySearch** | `search/provider_search.py` | Rule-based string matching |
+| **ProviderResearchLLM** | `provider_research/core/research_llm.py` | Legacy v1.0 orchestrator with LLM layers |
+| **ProviderOrchestrator** | `provider_research/core/orchestrator.py` | v2.0 query routing and coordination |
+| **ProviderQueryInterpreter** | `provider_research/core/query_interpreter.py` | Intent parsing and validation |
+| **ProviderSemanticMatcher** | `provider_research/core/semantic_matcher.py` | Semantic search and matching |
+| **ProviderDatabaseManager** | `provider_research/database/manager.py` | Database operations (v2.0) |
+| **ProviderDatabasePostgres** | `provider_research/database/postgres.py` | PostgreSQL backend (v1.0) |
+| **ProviderWebResearcher** | `provider_research/search/web_researcher.py` | Web scraping and data extraction |
+| **FuzzySearch** | `provider_research/search/provider_search.py` | Rule-based string matching |
 
 ### 2.4 Standalone Utilities
 

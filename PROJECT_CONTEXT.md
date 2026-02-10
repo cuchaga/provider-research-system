@@ -393,31 +393,31 @@ bash scripts/setup_postgres.sh
 **Implemented complete architectural refactoring** from monolithic system to modular skills-based approach:
 
 #### New Components Created
-1. **`core/orchestrator.py` (22KB, 618 lines)**
+1. **`provider_research/core/orchestrator.py` (22KB, 618 lines)**
    - Central coordinator for all 4 skills
    - State management & conversation context
    - Smart execution path routing (DB Hit, Semantic, Web Research, Clarification)
    - Token optimization via short-circuiting
 
-2. **`core/query_interpreter.py` (12KB, 354 lines)** - Skill 1
+2. **`provider_research/core/query_interpreter.py` (12KB, 354 lines)** - Skill 1
    - Natural language understanding & intent classification
    - Pronoun resolution ("their", "that", "it")
    - "Near me" location handling
    - Simulation mode for testing without API
 
-3. **`database/manager.py` (22KB, 680 lines)** - Skill 2
+3. **`provider_research/database/manager.py` (22KB, 680 lines)** - Skill 2
    - Fast rule-based search (exact, fuzzy, full-text)
    - Lazy psycopg2 import for optional PostgreSQL
    - CRUD operations
    - Zero token cost
 
-4. **`core/semantic_matcher.py` (12KB, 327 lines)** - Skill 3
+4. **`provider_research/core/semantic_matcher.py` (12KB, 327 lines)** - Skill 3
    - Abbreviation expansion (CK → Comfort Keepers, VA → Visiting Angels)
    - Parent/subsidiary matching
    - DBA name resolution
    - Rule-based + LLM fallback
 
-5. **`search/web_researcher.py` (23KB, 710 lines)** - Skill 4
+5. **`provider_research/search/web_researcher.py` (23KB, 710 lines)** - Skill 4
    - Web search & data extraction
    - Location extraction from text
    - Duplicate detection with rule-based logic

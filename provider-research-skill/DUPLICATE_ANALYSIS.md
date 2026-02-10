@@ -46,8 +46,8 @@
 - **Best Practice:** Having both is Python packaging standard practice
 
 ### 5. **Parent README vs Skill README** - KEEP BOTH (Different purposes)
-- **Parent:** `/provider-research-system/README.md` (Multi-skill system overview)
-- **Skill:** `/provider-research-skill/README.md` (Specific skill documentation)
+- **Parent:** `../README.md` (Multi-skill system overview)
+- **Skill:** `README.md` (Specific skill documentation)
 - **Status:** ✅ Different scopes, both needed
 - **Action:** KEEP BOTH - Serve different audiences
 
