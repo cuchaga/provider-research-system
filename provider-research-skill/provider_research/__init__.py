@@ -65,6 +65,13 @@ from .search.web_researcher import (
     ResearchResult,
     DeduplicationResult,
 )
+from .core.franchise_researcher import (
+    FranchiseResearcher,
+    FranchiseLocation,
+    HistoricalEvent,
+    DataSource,
+    EventType,
+)
 
 # LEGACY MODULES (v1.0.0 - Backward Compatibility)
 from .core.research_llm import (
@@ -93,12 +100,17 @@ __all__ = [
     "ProviderDatabaseManager",
     "ProviderSemanticMatcher",
     "ProviderWebResearcher",
+    "FranchiseResearcher",
     
     # Skill Data Classes
     "DatabaseSearchResult",
     "SemanticMatch",
     "ResearchResult",
     "DeduplicationResult",
+    "FranchiseLocation",
+    "HistoricalEvent",
+    "DataSource",
+    "EventType",
     
     # Legacy Main Classes (v1.0.0)
     "ProviderResearchLLM",
