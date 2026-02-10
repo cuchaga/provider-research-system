@@ -76,6 +76,7 @@ def create_schema():
                 location_website TEXT,
                 parent_website TEXT,
                 alternative_urls TEXT[],
+                data_source_urls TEXT[],  -- URLs where data was obtained (research sources)
                 
                 -- Organization
                 parent_organization VARCHAR(500),

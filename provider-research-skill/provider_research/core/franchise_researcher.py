@@ -112,6 +112,7 @@ class FranchiseLocation:
     
     # Metadata
     data_sources: Optional[List[str]] = None
+    data_source_urls: Optional[List[str]] = None  # Actual URLs where data was obtained
     last_verified: Optional[str] = None
     confidence_score: float = 0.0
 
@@ -268,13 +269,15 @@ class FranchiseResearcher:
             )
             
             # Convert web results to FranchiseLocation objects
-            # ResearchResult has .locations attribute
+            # ResearchResult has .locations and .source_urls attributes
             if hasattr(web_results, 'locations'):
+                source_urls = web_results.source_urls if hasattr(web_results, 'source_urls') else []
                 for loc_data in web_results.locations:
                     location_obj = self._convert_to_franchise_location(
                         loc_data, 
                         franchise_name,
-                        source=DataSource.FRANCHISE_LOCATOR.value
+                        source=DataSource.FRANCHISE_LOCATOR.value,
+                        source_urls=source_urls
                     )
                     locations.append(location_obj)
         
@@ -706,6 +709,13 @@ If no relevant information found, return empty list.
                 events = historical_data[location_key]
                 loc.ownership_history = events
                 
+                # Collect URLs from historical events
+                if loc.data_source_urls is None:
+                    loc.data_source_urls = []
+                for event in events:
+                    if event.source_url and event.source_url not in loc.data_source_urls:
+                        loc.data_source_urls.append(event.source_url)
+                
                 # Extract previous names
                 name_changes = [e for e in events if e.event_type == EventType.NAME_CHANGE.value]
                 if name_changes:
@@ -799,6 +809,13 @@ If no relevant information found, return empty list.
             target.data_sources.extend(source.data_sources)
             target.data_sources = list(set(target.data_sources))
         
+        # Merge data source URLs
+        if target.data_source_urls is None:
+            target.data_source_urls = []
+        if source.data_source_urls:
+            target.data_source_urls.extend(source.data_source_urls)
+            target.data_source_urls = list(set(target.data_source_urls))  # Deduplicate URLs
+        
         # Fill in missing fields from source
         for field in ['npi', 'email', 'website', 'phone', 'address_line2']:
             if getattr(target, field) is None and getattr(source, field) is not None:
@@ -841,7 +858,11 @@ If no relevant information found, return empty list.
         
         # Multiple data sources increase confidence
         if location.data_sources and len(location.data_sources) > 1:
-            score += 0.1
+            score += 0.05
+        
+        # Having actual source URLs adds credibility
+        if location.data_source_urls and len(location.data_source_urls) > 0:
+            score += 0.05
         
         # Historical data presence
         if location.ownership_history and len(location.ownership_history) > 0:
@@ -853,10 +874,17 @@ If no relevant information found, return empty list.
         self,
         data: Dict[str, Any],
         franchise_name: str,
-        source: str
+        source: str,
+        source_urls: Optional[List[str]] = None
     ) -> FranchiseLocation:
         """
         Convert raw data dictionary to FranchiseLocation object.
+        
+        Args:
+            data: Location data dictionary
+            franchise_name: Name of the franchise
+            source: Source identifier (e.g., 'franchise_locator')
+            source_urls: List of URLs where this data was obtained
         """
         return FranchiseLocation(
             legal_name=data.get('legal_name', data.get('name', '')),
@@ -872,6 +900,7 @@ If no relevant information found, return empty list.
             dba_names=data.get('dba_names', []),
             parent_organization=data.get('parent_organization', franchise_name),
             data_sources=[source],
+            data_source_urls=source_urls or [],
             last_verified=datetime.now().isoformat()
         )
     
@@ -967,7 +996,7 @@ If no relevant information found, return empty list.
                 )
                 
                 if existing and skip_duplicates:
-                    high_match = any(match.score > 0.9 for match in existing)
+                    high_match = any(match.match_score > 0.9 for match in existing)
                     if high_match:
                         import_stats['providers_skipped'] += 1
                         self.logger.info(f"Skipping duplicate: {location.legal_name}")
@@ -977,21 +1006,22 @@ If no relevant information found, return empty list.
                     self.logger.info(f"[DRY RUN] Would import: {location.legal_name}")
                     import_stats['providers_added'] += 1
                 else:
-                    # Add provider to database
-                    provider_id = self.db.add_provider(
-                        legal_name=location.legal_name,
-                        address_line1=location.address_line1,
-                        address_line2=location.address_line2,
-                        city=location.city,
-                        state=location.state,
-                        zip_code=location.zip_code,
-                        phone=location.phone,
-                        email=location.email,
-                        website=location.website,
-                        npi=location.npi,
-                        dba_names=location.dba_names,
-                        parent_organization=location.parent_organization
-                    )
+                    # Add provider to database with data source URLs
+                    provider_data = {
+                        'legal_name': location.legal_name,
+                        'address': f"{location.address_line1 or ''}, {location.city}, {location.state} {location.zip_code or ''}".strip(' ,'),
+                        'city': location.city,
+                        'state': location.state,
+                        'zip': location.zip_code,
+                        'phone': location.phone,
+                        'email': location.email,
+                        'website': location.website,
+                        'npi': location.npi,
+                        'dba_names': location.dba_names,
+                        'parent_organization': location.parent_organization,
+                        'data_source_urls': location.data_source_urls or []
+                    }
+                    provider_id = self.db.add_provider(provider_data)
                     import_stats['providers_added'] += 1
                     
                     # Add historical events

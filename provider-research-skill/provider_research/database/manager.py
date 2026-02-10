@@ -280,6 +280,126 @@ class ProviderDatabaseManager:
         
         return True
     
+    def display_providers(self, fields: List[str] = None, provider_id: str = None) -> List[Dict]:
+        """
+        Display providers with specified fields or default comprehensive view.
+        
+        Args:
+            fields: List of fields to display. If None, shows default comprehensive view:
+                   - business_name (legal_name)
+                   - dbas (dba_names)
+                   - current_address
+                   - previous_addresses (from history)
+                   - current_phone
+                   - previous_phones (from history)
+                   - current_owner (parent_organization)
+                   - previous_owners (from history)
+            provider_id: Optional specific provider ID. If None, shows all providers.
+            
+        Returns:
+            List of provider records with requested fields and historical data
+        """
+        if not self.conn:
+            self.connect()
+        
+        # Default fields if none specified
+        default_fields = [
+            'business_name', 'dbas', 
+            'current_address', 'previous_addresses',
+            'current_phone', 'previous_phones',
+            'current_owner', 'previous_owners'
+        ]
+        
+        fields_to_show = fields or default_fields
+        results = []
+        
+        # Get all providers or specific one
+        cur = self.conn.cursor(cursor_factory=RealDictCursor)
+        if provider_id:
+            cur.execute("SELECT * FROM providers WHERE id = %s", (provider_id,))
+        else:
+            cur.execute("SELECT * FROM providers ORDER BY legal_name")
+        
+        providers = cur.fetchall()
+        
+        for provider in providers:
+            provider_dict = dict(provider)
+            display_record = {'id': provider_dict['id']}
+            
+            # Business name
+            if 'business_name' in fields_to_show:
+                display_record['business_name'] = provider_dict.get('legal_name')
+            
+            # DBAs
+            if 'dbas' in fields_to_show:
+                display_record['dbas'] = provider_dict.get('dba_names', [])
+            
+            # Current address
+            if 'current_address' in fields_to_show:
+                address_parts = []
+                if provider_dict.get('address_line1'):
+                    address_parts.append(provider_dict['address_line1'])
+                if provider_dict.get('address_line2'):
+                    address_parts.append(provider_dict['address_line2'])
+                if provider_dict.get('city'):
+                    city_state_zip = provider_dict['city']
+                    if provider_dict.get('state'):
+                        city_state_zip += f", {provider_dict['state']}"
+                    if provider_dict.get('zip_code'):
+                        city_state_zip += f" {provider_dict['zip_code']}"
+                    address_parts.append(city_state_zip)
+                display_record['current_address'] = ', '.join(address_parts) if address_parts else None
+            
+            # Previous addresses from history
+            if 'previous_addresses' in fields_to_show:
+                cur.execute("""
+                    SELECT old_value, effective_date, source
+                    FROM provider_history
+                    WHERE provider_id = %s
+                      AND field_name IN ('address_line1', 'city', 'state', 'zip_code')
+                    ORDER BY effective_date DESC
+                """, (provider_dict['id'],))
+                prev_addresses = [dict(row) for row in cur.fetchall()]
+                display_record['previous_addresses'] = prev_addresses
+            
+            # Current phone
+            if 'current_phone' in fields_to_show:
+                display_record['current_phone'] = provider_dict.get('phone')
+            
+            # Previous phones from history
+            if 'previous_phones' in fields_to_show:
+                cur.execute("""
+                    SELECT old_value as phone, effective_date, source
+                    FROM provider_history
+                    WHERE provider_id = %s
+                      AND field_name = 'phone'
+                    ORDER BY effective_date DESC
+                """, (provider_dict['id'],))
+                prev_phones = [dict(row) for row in cur.fetchall()]
+                display_record['previous_phones'] = prev_phones
+            
+            # Current owner
+            if 'current_owner' in fields_to_show:
+                display_record['current_owner'] = provider_dict.get('parent_organization')
+            
+            # Previous owners from history
+            if 'previous_owners' in fields_to_show:
+                prev_owners = self.get_previous_owners(provider_dict['id'])
+                display_record['previous_owners'] = prev_owners
+            
+            # Data source URLs
+            if 'data_source_urls' in fields_to_show:
+                display_record['data_source_urls'] = provider_dict.get('data_source_urls', [])
+            
+            # Add any other directly requested fields
+            for field in fields_to_show:
+                if field not in display_record and field in provider_dict:
+                    display_record[field] = provider_dict[field]
+            
+            results.append(display_record)
+        
+        return results
+    
     def search(
         self,
         query: str = None,
@@ -568,6 +688,7 @@ class ProviderDatabaseManager:
                 - parent_organization: Business owner/parent company
                 - real_estate_owner: Property owner/landlord
                 - franchise_id, website, dba_names: Optional
+                - data_source_urls: List of URLs where data was obtained
         
         Returns:
             Provider ID (UUID)
@@ -575,24 +696,37 @@ class ProviderDatabaseManager:
         self.connect()
         provider_id = str(uuid.uuid4())
         
+        # Helper function to convert list to PostgreSQL array format
+        def to_pg_array(items):
+            if not items or not isinstance(items, list):
+                return None
+            # Format as PostgreSQL array: '{"item1","item2"}'
+            return '{' + ','.join([f'"{str(item).replace(chr(34), chr(34)+chr(34))}"' for item in items]) + '}'
+        
+        # Handle array fields
+        dba_names_array = to_pg_array(provider_data.get('dba_names'))
+        name_variations_array = to_pg_array(self._generate_name_variations(provider_data.get('legal_name', '')))
+        data_source_urls_array = to_pg_array(provider_data.get('data_source_urls'))
+        
         cur = self.conn.cursor()
         cur.execute("""
             INSERT INTO providers (
                 id, npi, legal_name, dba_names, name_variations,
                 address_full, address_city, address_state, address_zip,
                 phone, parent_organization, real_estate_owner, franchise_id,
-                location_website, created_at, validated_at
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                location_website, data_source_urls, created_at, validated_at
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (npi) DO UPDATE SET
                 legal_name = EXCLUDED.legal_name,
+                data_source_urls = COALESCE(EXCLUDED.data_source_urls, providers.data_source_urls),
                 last_updated = CURRENT_TIMESTAMP
             RETURNING id
         """, (
             provider_id,
             provider_data.get('npi'),
             provider_data.get('legal_name'),
-            json.dumps(provider_data.get('dba_names', [])),
-            json.dumps(self._generate_name_variations(provider_data.get('legal_name', ''))),
+            dba_names_array,
+            name_variations_array,
             provider_data.get('address'),
             provider_data.get('city'),
             provider_data.get('state'),
@@ -602,6 +736,7 @@ class ProviderDatabaseManager:
             provider_data.get('real_estate_owner'),
             provider_data.get('franchise_id'),
             provider_data.get('website'),
+            data_source_urls_array,
             datetime.utcnow(),
             datetime.utcnow()
         ))
