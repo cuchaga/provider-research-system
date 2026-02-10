@@ -182,18 +182,49 @@ python3 examples/advanced_orchestration.py
 
 ## 💻 COMMON COMMANDS
 
+### Development Setup (First Time)
 ```bash
-# Run tests
-python3 test_provider_research_llm.py
+# Create virtual environment
+python3 -m venv venv
 
+# Activate virtual environment
+source venv/bin/activate  # macOS/Linux
+# OR: venv\Scripts\activate  # Windows
+
+# Install in development mode (editable - changes reflect immediately)
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+pip install -e .
+
+# Verify installation
+which python3  # Should show venv/bin/python3
+python3 -c "from provider_research import ProviderOrchestrator; print('✓ OK')"
+```
+
+### Daily Development
+```bash
+# ALWAYS activate venv first!
+source venv/bin/activate
+
+# Run tests
+pytest tests/test_validation.py -v
+pytest tests/ -v --cov=provider_research
+
+# Run examples
+python3 examples/basic_usage.py
+python3 examples/franchise_research_usage.py
+
+# When done
+deactivate
+```
+
+### Database Commands
+```bash
 # Start database
 sudo service postgresql start
 
 # Initialize database
 bash scripts/init_database.sh
-
-# Install dependencies
-pip install -r requirements.txt
 ```
 
 ---

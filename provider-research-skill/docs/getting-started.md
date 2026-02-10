@@ -9,16 +9,52 @@
 git clone https://github.com/cuchaga/provider-research-system.git
 cd provider-research-system/provider-research-skill
 
-# Create virtual environment
+# Create virtual environment (RECOMMENDED for development)
 python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Activate virtual environment
+source venv/bin/activate  # On macOS/Linux
+# OR on Windows:
+# venv\Scripts\activate
+
+# Verify you're in the virtual environment
+which python3  # Should show path to venv/bin/python3
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Install in development mode
+# Install in development mode (editable install)
+# This allows you to edit code and see changes immediately without reinstalling
 pip install -e .
+
+# Install development dependencies (for testing, linting)
+pip install -r requirements-dev.txt
 ```
+
+#### Virtual Environment Best Practices
+
+**Always activate the virtual environment before working:**
+```bash
+# In project directory
+source venv/bin/activate
+```
+
+**To deactivate when done:**
+```bash
+deactivate
+```
+
+**Why use a virtual environment?**
+- Isolates project dependencies from system Python
+- Prevents version conflicts with other projects
+- Makes the project reproducible
+- Safer for development and testing
+
+**Development Mode (`pip install -e .`):**
+- Code changes take effect immediately
+- No need to reinstall after each edit
+- Perfect for active development
+- Import from anywhere: `from provider_research import ...`
 
 ### Using pip (when published)
 

@@ -14,9 +14,9 @@ Upload this file along with the project zip to resume work seamlessly.
 **Status:** ✅ Production Ready - Professionally Structured & Fully Tested
 **Tests:** 10/10 Passing (includes validation + integrity tests)
 **Integrity Check:** 0 errors, 12 intentional warnings (68% improvement)
-**Latest Commit:** 767d464 - Add FranchiseResearcher skill (reusable franchise research)
-**Previous Commits:** 78d2aa7, 7a1ae45, 25de145, e54665c
-**Date Updated:** February 9, 2026 (Late Night - Final)
+**Latest Commit:** (uncommitted) - Enhanced historical data search + dev environment improvements
+**Previous Commits:** 767d464, 78d2aa7, 7a1ae45, 25de145, e54665c
+**Date Updated:** February 9, 2026 (Late Night - Enhanced)
 **GitHub:** github.com/cuchaga/provider-research-system
 
 ### What It Does
@@ -25,9 +25,11 @@ An LLM-enhanced healthcare provider research system for Claude AI that:
 - Searches databases with rule-based and semantic matching
 - Extracts structured data from unstructured web content (real HTTP + BeautifulSoup)
 - Tracks historical changes (previous names, previous owners, acquisitions)
+- **NEW:** Real web search for historical data (Google News, business journals, SEC filings)
 - Searches newspaper archives for ownership transactions
 - Deduplicates with intelligent edge case handling
 - Validates against NPI registry
+- **NEW:** Complete development environment documentation with virtual environment setup
 - Tracks real estate ownership (landlords, REITs, property management)
 - Batch franchise location research (reusable for any franchise, any location)
 
@@ -148,27 +150,32 @@ provider_research/
 
 ### Documentation
 | File | Size | Purpose |
-|------|------|---------|
+|------|---------|---------|  
 | `PROJECT_CONTEXT.md` | 15KB | **THIS FILE** - Complete project context |
-| `SESSION_HANDOFF.md` | 9KB | Session handoff summary (what just happened) |
-| `QUICK_REFERENCE.md` | 8KB | Quick start for new chats |
+| `SESSION_HANDOFF.md` | 12KB | Session handoff summary (what just happened) |
+| `QUICK_REFERENCE.md` | 10KB | Quick start for new chats |
+| `DEVELOPMENT.md` | 12KB | Complete developer workflow guide ⭐NEW |
 | `provider-research-skill/README.md` | 18KB | Package documentation and usage guide |
 | `provider-research-skill/docs/architecture/v2-multi-skill.md` | 14KB | Complete v2.0.0 architecture docs |
 | `provider-research-skill/docs/architecture/overview.md` | 18KB | Technical architecture specification |
+| `provider-research-skill/docs/guides/historical-data-search.md` | 15KB | Historical data search feature docs ⭐NEW |
+| `provider-research-skill/docs/guides/getting-started.md` | 8KB | Getting started with venv setup |
 | `provider-research-skill/INTEGRITY_TEST_RESULTS.md` | 8KB | File & import integrity test results |
-| `QUICK_REFERENCE.md` | 8KB | Quick start commands and patterns |
 
 ### Configuration
 | File | Purpose |
 |------|---------|
 | `requirements.txt` | Python dependencies |
+| `requirements-dev.txt` | Development dependencies |
 | `setup.py` | Package installer |
+| `pyproject.toml` | Project metadata |
 | `__init__.py` | Package exports |
 | `.gitignore` | Git exclusions |
+| `.vscode/settings.json` | VS Code configuration ⭐NEW |
 | `LICENSE` | MIT License |
 | `scripts/setup_postgres.sh` | Database setup script |
 
-### Diagrams
+### Architecture Diagrams
 | File | Purpose |
 |------|---------|
 | `docs/architecture-diagram.html` | Interactive visual diagram |
@@ -178,22 +185,24 @@ provider_research/
 
 ## DATABASE STATE
 
-### Current Test Data (8 providers)
-```
-1. Home Instead - Metrowest (Wellesley, MA)
-2. Home Instead Senior Care of Boston (Boston, MA)
-3. Comfort Keepers of Oakland County (Troy, MI)
-4. CK Franchising Inc (Troy, MI)
-5. Visiting Angels of Boston (Boston, MA)
-6. Visiting Angels of Detroit (Detroit, MI)
-7. BrightStar Care of Macomb (Sterling Heights, MI)
-8. GCP REIT IV (Chicago, IL) - from earlier session
-```
+### Current Test Data
+**Status:** Database currently empty (cleaned for testing)
+**Previous Test Data:** 6 Home Instead franchises in Greater Boston area
+- Can be re-imported using `add_home_instead_boston.py`
+
+**Available Import Data:**
+1. Home Instead Senior Care of Boston (Downtown Boston)
+2. Home Instead - Metrowest (Wellesley)
+3. Home Instead Senior Care of Cambridge & Somerville
+4. Home Instead Senior Care of Brookline & Brighton
+5. Home Instead Senior Care of North Shore (Danvers)
+6. Home Instead Senior Care of South Shore (Quincy)
 
 ### Database Schema (PostgreSQL)
 ```sql
 -- Main tables
 providers (id, npi, legal_name, dba_names, address_*, phone, parent_organization, ...)
+provider_history (id, provider_id, change_type, field_name, old_value, new_value, effective_date, source, ...)
 search_history (id, provider_id, search_query, match_found, match_method, ...)
 research_sessions (id, provider_name, state, status, token_cost, ...)
 ```

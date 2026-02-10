@@ -124,8 +124,15 @@ Command-line tools for:
 git clone https://github.com/cuchaga/provider-research-system.git
 cd provider-research-system/provider-research-skill
 
+# Create and activate virtual environment (recommended)
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
 # Install dependencies
 pip install -r requirements.txt
+
+# Install in development mode (for active development)
+pip install -e .  # Editable install - changes reflect immediately
 
 # Set up PostgreSQL database (automated)
 chmod +x scripts/setup_postgres.sh

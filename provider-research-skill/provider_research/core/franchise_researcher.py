@@ -394,19 +394,204 @@ class FranchiseResearcher:
                 for term in search_terms[:2]  # Limit in simulation
             ]
         
-        # Production implementation would search:
-        # - Google News Archive
-        # - LexisNexis
-        # - ProQuest
-        # - Regional newspaper archives
-        # - Business journal archives
-        
+        # Production implementation: Search multiple sources for historical data
         articles = []
         
-        # Placeholder for actual implementation
-        self.logger.warning("News archive search not yet implemented in production mode")
+        try:
+            import requests
+            from bs4 import BeautifulSoup
+            from urllib.parse import quote_plus
+            
+            # Search sources for historical business data
+            for term in search_terms:
+                self.logger.info(f"Searching historical data for: {term}")
+                
+                # 1. Google News search for historical articles
+                articles.extend(self._search_google_news(term, date_range))
+                
+                #  2. Business journal searches (limit to prevent rate limiting)
+                if len(articles) < 10:  # Limit total articles
+                    articles.extend(self._search_business_journals(term, date_range))
+                
+                # 3. SEC EDGAR for public company transactions
+                if len(articles) < 15:
+                    articles.extend(self._search_sec_filings(term, date_range))
+            
+        except ImportError:
+            self.logger.warning("requests/beautifulsoup4 not available for historical search")
+            self.logger.warning("Install with: pip install requests beautifulsoup4")
+        except Exception as e:
+            self.logger.error(f"Error searching historical data: {e}")
         
         return articles
+    
+    def _search_google_news(
+        self,
+        search_term: str,
+        date_range: Tuple[str, str]
+    ) -> List[Dict[str, Any]]:
+        """
+        Search Google News for historical articles about franchise transactions.
+        """
+        articles = []
+        
+        try:
+            import requests
+            from bs4 import BeautifulSoup
+            from urllib.parse import quote_plus
+            
+            # Construct Google News search URL
+            encoded_term = quote_plus(search_term)
+            url = f"https://www.google.com/search?q={encoded_term}&tbm=nws"
+            
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+            }
+            
+            response = requests.get(url, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # Extract news article results (generic parsing)
+                for result in soup.find_all('div', limit=5):  # Limit to 5 per search
+                    try:
+                        links = result.find_all('a')
+                        if links:
+                            for link in links[:2]:  # Get first 2 links from each div
+                                title_text = link.get_text().strip()
+                                if len(title_text) > 20:  # Filter out short/empty links
+                                    articles.append({
+                                        'title': title_text,
+                                        'content': title_text,  # Use title as content snippet
+                                        'url': link.get('href', ''),
+                                        'source': 'Google News',
+                                        'date': 'unknown'
+                                    })
+                                    break
+                    except Exception as e:
+                        continue
+        
+        except Exception as e:
+            self.logger.debug(f"Google News search failed: {e}")
+        
+        return articles[:5]  # Limit to 5 articles max
+    
+    def _search_business_journals(
+        self,
+        search_term: str,
+        date_range: Tuple[str, str]
+    ) -> List[Dict[str, Any]]:
+        """
+        Search business journals and trade publications for franchise transactions.
+        """
+        articles = []
+        
+        # Business journal sources to search
+        sources = [
+            ('Senior Housing News', 'https://seniorhousingnews.com/?s='),
+            ('Home Health Care News', 'https://homehealthcarenews.com/?s=')
+        ]
+        
+        try:
+            import requests
+            from bs4 import BeautifulSoup
+            from urllib.parse import quote_plus
+            import re
+            
+            for source_name, base_url in sources[:2]:  # Limit to 2 sources
+                try:
+                    encoded_term = quote_plus(search_term)
+                    url = f"{base_url}{encoded_term}"
+                    
+                    headers = {
+                        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+                    }
+                    
+                    response = requests.get(url, headers=headers, timeout=10)
+                    
+                    if response.status_code == 200:
+                        soup = BeautifulSoup(response.content, 'html.parser')
+                        
+                        # Look for article titles and links (generic selectors)
+                        for article in soup.find_all(['article', 'div'], class_=re.compile(r'(article|post|entry)'))[:2]:
+                            try:
+                                title = article.find(['h2', 'h3', 'h4', 'a'])
+                                if title:
+                                    link = article.find('a')
+                                    articles.append({
+                                        'title': title.get_text().strip()[:200],
+                                        'content': '',
+                                        'url': link.get('href', '') if link else '',
+                                        'source': source_name,
+                                        'date': 'unknown'
+                                    })
+                            except Exception:
+                                continue
+                
+                except Exception as e:
+                    self.logger.debug(f"Error searching {source_name}: {e}")
+                    continue
+        
+        except Exception as e:
+            self.logger.debug(f"Business journal search failed: {e}")
+        
+        return articles[:5]  # Limit to 5 articles max
+    
+    def _search_sec_filings(
+        self,
+        search_term: str,
+        date_range: Tuple[str, str]
+    ) -> List[Dict[str, Any]]:
+        """
+        Search SEC EDGAR for public company transactions and filings.
+        """
+        articles = []
+        
+        try:
+            import requests
+            from bs4 import BeautifulSoup
+            from urllib.parse import quote_plus
+            
+            # Search SEC EDGAR full-text search
+            encoded_term = quote_plus(search_term)
+            url = f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company={encoded_term}&count=5"
+            
+            headers = {
+                'User-Agent': 'Provider Research System research@example.com',
+                'Accept-Encoding': 'gzip, deflate',
+                'Host': 'www.sec.gov'
+            }
+            
+            response = requests.get(url, headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # Extract filing information
+                for row in soup.find_all('tr')[:3]:  # Limit to 3 filings
+                    try:
+                        cells = row.find_all('td')
+                        if len(cells) >= 4:
+                            filing_type = cells[0].get_text().strip()
+                            description = ' '.join(cells[2].get_text().split())
+                            
+                            # Look for acquisition-related filings
+                            if any(keyword in filing_type.upper() for keyword in ['8-K', '10-K', 'S-4']):
+                                articles.append({
+                                    'title': f"SEC Filing {filing_type}: {description[:100]}",
+                                    'content': description,
+                                    'url': url,
+                                    'source': 'SEC EDGAR',
+                                    'date': 'unknown'
+                                })
+                    except Exception:
+                        continue
+        
+        except Exception as e:
+            self.logger.debug(f"SEC search failed: {e}")
+        
+        return articles[:3]  # Limit to 3 filings max
     
     def _search_npi_registry(
         self,
