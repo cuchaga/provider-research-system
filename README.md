@@ -87,7 +87,7 @@ result = research.process_query("Find Home Instead in MA")
 
 ---
 
-## 📦 The 4 Skills
+## 📦 The 5 Skills
 
 > **Import Note:** All components are available from the main `provider_research` package:
 > ```python
@@ -96,7 +96,8 @@ result = research.process_query("Find Home Instead in MA")
 >     ProviderQueryInterpreter,
 >     ProviderDatabaseManager,
 >     ProviderSemanticMatcher,
->     ProviderWebResearcher
+>     ProviderWebResearcher,
+>     FranchiseResearcher  # ⭐ NEW: Meta-skill for franchise research
 > )
 > ```
 
@@ -197,6 +198,50 @@ result = researcher.research(
 - NPI registry validation
 
 **Token Cost:** ~5,000 tokens (extraction + dedup + NPI)
+
+---
+
+### Skill 5: Franchise Researcher ⭐ NEW
+**File:** `provider_research/core/franchise_researcher.py`
+
+```python
+from provider_research import FranchiseResearcher
+
+researcher = FranchiseResearcher(db_config, llm_client)
+
+# Research all locations of any franchise
+results = researcher.research_franchise_locations(
+    franchise_name="Home Instead",  # Any franchise
+    location="Massachusetts",        # Any location
+    include_history=True            # Previous owners, name changes
+)
+
+# Export and import
+researcher.export_results(results, "output.json")
+researcher.import_results(results, dry_run=False)
+```
+
+**Capabilities:**
+- **Multi-source data collection** (websites, NPI, directories)
+- **Historical tracking** (previous owners, name changes, transactions)
+- **Newspaper archive search** for ownership changes
+- Automated validation and deduplication
+- Batch database import with history
+- **Reusable for ANY franchise in ANY location**
+
+**Quick Start:**
+```bash
+python3 examples/home_instead_ma_quick_start.py
+```
+
+**Use Cases:**
+- Research all franchise locations in a state
+- Track franchise ownership changes over time
+- Find previous business names and owners
+- Batch import franchise chains to database
+- Market research on franchise presence
+
+**Token Cost:** Variable (uses all other skills as needed)
 
 ---
 

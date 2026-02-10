@@ -2,9 +2,9 @@
 
 ## 🚀 QUICK START FOR NEW CHAT
 
-**Last Updated:** February 9, 2026 (Late Evening - Latest)  
-**Latest Commit:** 7a1ae45  
-**Status:** ✅ All tests passing, documentation fully cleaned and verified
+**Last Updated:** February 9, 2026 (Late Night - Final)  
+**Latest Commit:** 767d464  
+**Status:** ✅ All tests passing, NEW FranchiseResearcher skill added
 
 ### Upload These Files:
 1. **`PROJECT_CONTEXT.md`** - Complete project state & architecture
@@ -30,6 +30,7 @@ provider-research-skill/
 │   │   │   ├── orchestrator.py           # Main coordinator (22KB, 618 lines)
 │   │   │   ├── query_interpreter.py      # Skill 1: NLU (12KB, 354 lines)
 │   │   │   ├── semantic_matcher.py       # Skill 3: Matching (12KB, 327 lines)
+│   │   │   ├── franchise_researcher.py   # Skill 5: Franchise Research (33KB, 950 lines) ⭐NEW
 │   │   │   └── research_llm.py           # Legacy v1.0 (32KB)
 │   │   ├── database/
 │   │   │   ├── manager.py                # Skill 2: DB Ops (22KB, 680 lines)
@@ -41,7 +42,9 @@ provider-research-skill/
 │   │   └── utils/                        # Validators, formatters, logger
 │   ├── examples/
 │   │   ├── basic_usage.py
-│   │   └── advanced_orchestration.py
+│   │   ├── advanced_orchestration.py
+│   │   ├── franchise_research_usage.py     # 7 FranchiseResearcher examples ⭐NEW
+│   │   └── home_instead_ma_quick_start.py  # Quick start script ⭐NEW
 │   └── tests/
 │       ├── test_validation.py
 │       └── test_file_and_import_integrity.py
@@ -232,6 +235,40 @@ parsed = research.interpret_query("Find CK near me",
 ```python
 matches = research.semantic_match("Comfort Keepers", {"state": "MI"})
 ```
+
+### 🆕 Franchise Location Research (Skill 5)
+```python
+from provider_research import FranchiseResearcher
+
+# Initialize
+researcher = FranchiseResearcher(db_config, llm_client, simulation_mode=True)
+
+# Research any franchise in any location
+results = researcher.research_franchise_locations(
+    franchise_name="Home Instead",    # Or ANY franchise
+    location="Massachusetts",          # Or ANY location
+    include_history=True               # Includes previous owners & names!
+)
+
+# Export results
+researcher.export_results(results, "data/exports/home_instead_ma.json")
+
+# Import to database
+stats = researcher.import_results(results, dry_run=False)
+```
+
+**Quick Start Script:**
+```bash
+python3 examples/home_instead_ma_quick_start.py
+```
+
+**Features:**
+- Multi-source data collection (websites, NPI, directories)
+- Historical tracking (previous owners, name changes, transactions)
+- Newspaper archive search for ownership changes
+- Automated deduplication and validation
+- Batch import with historical events
+- Works for ANY franchise in ANY location
 
 ---
 

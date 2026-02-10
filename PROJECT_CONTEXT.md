@@ -14,8 +14,9 @@ Upload this file along with the project zip to resume work seamlessly.
 **Status:** ✅ Production Ready - Professionally Structured & Fully Tested
 **Tests:** 10/10 Passing (includes validation + integrity tests)
 **Integrity Check:** 0 errors, 12 intentional warnings (68% improvement)
-**Latest Commit:** 7a1ae45 - Eliminated all fixable documentation warnings
-**Date Updated:** February 9, 2026 (Late Evening - Latest)
+**Latest Commit:** 767d464 - Add FranchiseResearcher skill (reusable franchise research)
+**Previous Commits:** 78d2aa7, 7a1ae45, 25de145, e54665c
+**Date Updated:** February 9, 2026 (Late Night - Final)
 **GitHub:** github.com/cuchaga/provider-research-system
 
 ### What It Does
@@ -24,9 +25,11 @@ An LLM-enhanced healthcare provider research system for Claude AI that:
 - Searches databases with rule-based and semantic matching
 - Extracts structured data from unstructured web content (real HTTP + BeautifulSoup)
 - Tracks historical changes (previous names, previous owners, acquisitions)
+- Searches newspaper archives for ownership transactions
 - Deduplicates with intelligent edge case handling
 - Validates against NPI registry
 - Tracks real estate ownership (landlords, REITs, property management)
+- Batch franchise location research (reusable for any franchise, any location)
 
 ### v2.0.0 Architecture (NEW - February 9, 2026)
 **Multi-Skill Architecture with Central Orchestrator:**
@@ -34,6 +37,7 @@ An LLM-enhanced healthcare provider research system for Claude AI that:
 - **Skill 2:** Provider Database Manager (Layer 1 - Rule-based search)
 - **Skill 3:** Provider Semantic Matcher (Layer 2 - Intelligent matching)
 - **Skill 4:** Provider Web Researcher (Layers 3-5 - Research + validation)
+- **Skill 5:** Franchise Researcher (Meta-skill - Orchestrates all skills for franchise location research)
 - **Orchestrator:** Coordinates all skills, manages state, optimizes tokens
 
 **Benefits:** Modularity, testability, reusability, maintainability
@@ -114,6 +118,7 @@ provider_research/
 │   ├── orchestrator.py           # 22KB, 618 lines - Main coordinator
 │   ├── query_interpreter.py      # 12KB, 354 lines - Skill 1: NLU
 │   ├── semantic_matcher.py       # 12KB, 327 lines - Skill 3: Matching
+│   ├── franchise_researcher.py   # 33KB, 950 lines - Skill 5: Franchise research ⭐NEW
 │   └── research_llm.py           # 32KB - Legacy v1.0
 ├── database/
 │   ├── manager.py                # 22KB, 680 lines - Skill 2: Database ops
@@ -128,8 +133,8 @@ provider_research/
 | File | Size | Purpose |
 |------|------|---------|
 | `examples/basic_usage.py` | 5KB | Basic usage examples |
-| `examples/advanced_orchestration.py` | 6KB | Advanced multi-step workflows |
-| `tests/test_validation.py` | 8KB | Quick validation tests (9/9 passing) |
+| `examples/advanced_orchestration.py` | 6KB | Advanced multi-step workflows || `examples/franchise_research_usage.py` | 22KB | 7 examples of FranchiseResearcher ⭐NEW |
+| `examples/home_instead_ma_quick_start.py` | 7KB | Quick start for Home Instead MA ⭐NEW || `tests/test_validation.py` | 8KB | Quick validation tests (9/9 passing) |
 | `tests/test_file_and_import_integrity.py` | 15KB | Comprehensive integrity tests |
 
 ### Legacy Python Modules (v1.0.0 - Still Supported)

@@ -2,11 +2,11 @@
 
 ## 📋 CRITICAL: Read This First for New Chat
 
-**Date:** February 9, 2026 (Late Evening - Latest)  
+**Date:** February 9, 2026 (Late Night - Final Update)  
 **Version:** 2.0.0 (Multi-Skill Architecture)  
 **Status:** ✅ Production Ready - All tests passing (10/10)  
-**Latest Commit:** `7a1ae45` - Eliminated all fixable documentation warnings  
-**Previous Commits (This Session):** `e54665c`, `25de145`, `2de6f7e`  
+**Latest Commit:** `767d464` - Add FranchiseResearcher skill  
+**Previous Commits (This Session):** `78d2aa7`, `7a1ae45`, `25de145`, `e54665c`, `2de6f7e`  
 **Git Branch:** `main` (pushed to GitHub)
 
 ---
@@ -29,9 +29,10 @@ let me know you're ready to continue."
 ### Step 3: Wait for Confirmation
 The AI will read all context and confirm understanding of:
 - Current v2.0.0 multi-skill architecture
-- Recent documentation cleanup (4 commits)
+- NEW: FranchiseResearcher skill (Skill 5) for reusable franchise location research
+- Recent work: FranchiseResearcher + documentation cleanup (6 commits total)
 - Current status: Production ready, 10/10 tests passing
-- Latest commit: 7a1ae45
+- Latest commit: 767d464
 
 ### Alternative: If You Have the Zip
 1. Upload `provider-research-skill.zip`
@@ -45,7 +46,56 @@ The AI will read all context and confirm understanding of:
 
 ### Recent Work Completed:
 
-**1. Documentation Quality Improvement Campaign (Feb 9, 2026 - Full Session)**
+**LATEST: FranchiseResearcher Skill (Feb 9, 2026 - Late Night)**
+
+**Commit `767d464`** - Add FranchiseResearcher skill for reusable franchise research
+- ✅ Created comprehensive meta-skill that orchestrates all other skills
+- ✅ Multi-source data collection (franchise locators, NPI Registry, directories)
+- ✅ **Historical data extraction** (previous owners, name changes, transactions)
+- ✅ **Newspaper/business journal archive search** for ownership changes
+- ✅ Automated validation and deduplication
+- ✅ Batch database import with full historical tracking
+- ✅ Export to JSON/CSV for review
+- ✅ **Flexible for ANY franchise in ANY location** (not just Home Instead in MA)
+- ✅ **Result:** 950-line skill + 2 example scripts (7 detailed examples)
+
+**Key Features:**
+```python
+from provider_research import FranchiseResearcher
+
+researcher = FranchiseResearcher(db_config, llm_client)
+
+# Research any franchise anywhere
+results = researcher.research_franchise_locations(
+    franchise_name="Home Instead",  # Or ANY franchise
+    location="Massachusetts",       # Or ANY location  
+    include_history=True            # Includes ownership & name changes!
+)
+
+# Export for review
+researcher.export_results(results, "output.json")
+
+# Import to database with historical tracking
+stats = researcher.import_results(results, dry_run=False)
+```
+
+**Files Created:**
+- `provider_research/core/franchise_researcher.py` (950 lines)
+- `examples/franchise_research_usage.py` (7 detailed examples)
+- `examples/home_instead_ma_quick_start.py` (ready-to-run script)
+- Updated `provider_research/__init__.py` (exports new skill)
+- Updated `TODO.md` (new implementation plan)
+
+**Historical Data Tracked:**
+- Previous owners (names, dates, sources)
+- Previous business names/DBAs
+- Ownership changes (sales, acquisitions, mergers)
+- Transaction details (dates, values, news sources)
+- Newspaper archives searched automatically
+
+---
+
+**1. Documentation Quality Improvement Campaign (Feb 9, 2026 - Evening)**
 
 **Complete Fix Series - 4 Commits:**
 

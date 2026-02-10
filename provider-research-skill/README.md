@@ -16,6 +16,8 @@ This skill enables Claude to research, validate, and manage healthcare provider 
 - **📊 Smart Data Extraction** - Extracts structured data from unstructured web content
 - **🔄 Intelligent Deduplication** - Handles edge cases like same address/different suite
 - **🏥 NPI Registry Integration** - Matches providers to official NPI records
+- **📜 Historical Tracking** - Previous owners, name changes, acquisition history ⭐ NEW
+- **🏢 Franchise Research** - Batch research and import for franchise locations ⭐ NEW
 - **⚡ Standalone Tools** - CLI utilities for data enrichment, database setup, and search (no LLM required)
 
 ## Two Ways to Use
