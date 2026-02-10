@@ -2,12 +2,12 @@
 
 ## 📋 CRITICAL: Read This First for New Chat
 
-**Date:** February 9, 2026 (Late Night - Enhanced Update)  
+**Date:** February 10, 2026 (Early Morning)  
 **Version:** 2.0.0 (Multi-Skill Architecture)  
 **Status:** ✅ Production Ready - All tests passing (10/10)  
-**Latest Work:** Enhanced historical data search + development environment improvements  
-**Latest Commit:** `767d464` - Add FranchiseResearcher skill  
-**Git Branch:** `main` (uncommitted changes ready)
+**Latest Work:** Data source URL tracking + flexible provider display  
+**Latest Commit:** `71a718b` - Add data source URL tracking and flexible provider display  
+**Git Branch:** `main` (2 commits ahead of origin/main)
 
 ---
 
@@ -29,10 +29,11 @@ let me know you're ready to continue."
 ### Step 3: Wait for Confirmation
 The AI will read all context and confirm understanding of:
 - Current v2.0.0 multi-skill architecture
-- NEW: FranchiseResearcher skill (Skill 5) for reusable franchise location research
-- Recent work: FranchiseResearcher + documentation cleanup (6 commits total)
+- NEW: Data source URL tracking for full data provenance
+- NEW: Flexible provider display system
+- Recent work: URL tracking + display system + historical search + dev environment (8 commits total)
 - Current status: Production ready, 10/10 tests passing
-- Latest commit: 767d464
+- Latest commit: 71a718b
 
 ### Alternative: If You Have the Zip
 1. Upload `provider-research-skill.zip`
@@ -46,7 +47,42 @@ The AI will read all context and confirm understanding of:
 
 ### Recent Work Completed:
 
-**LATEST: Enhanced Historical Data Search + Dev Environment (Feb 9, 2026 - Late Night)**
+**LATEST: Data Source URL Tracking + Flexible Display (Feb 10, 2026 - Early Morning)**
+
+#### Commit 71a718b: feat: Add data source URL tracking and flexible provider display
+
+**🔗 Data Source URL Tracking:**
+- Added `data_source_urls` field to FranchiseLocation dataclass
+- Capture URLs from web searches and historical research automatically
+- Merge URLs from historical events into location objects
+- Store URLs in database `data_source_urls TEXT[]` field
+- Updated `add_provider()` to handle PostgreSQL array formatting
+- Include URLs in confidence score calculation (+0.05)
+- Complete documentation: `docs/guides/url-tracking.md`
+
+**📊 Flexible Provider Display System:**
+- Added `display_providers()` method to ProviderDatabaseManager
+- Support custom field selection or default comprehensive view
+- Default fields: business name, DBAs, current/previous addresses, phones, owners
+- Include data source URLs in display output
+- Created `display_providers.py` CLI tool with field selection
+- Format historical data with dates and sources
+
+**🔧 Database Enhancements:**
+- Added `data_source_urls TEXT[]` column to providers table
+- Updated schema documentation in setup_postgres_schema.py
+- Fixed SearchResult.score to SearchResult.match_score in import_results
+- Improved array handling with proper escaping and deduplication
+
+**📝 Documentation & Cleanup:**
+- Added comprehensive URL tracking documentation
+- Removed temporary test files (test_data_source_urls, test_historical_search, test_url_tracking)
+- Removed executed migration script (add_data_source_urls_field.py)
+- Cleaned Python cache files and pytest cache
+
+#### Commit d7c0f94: feat: Add historical data search, dev environment docs, and database tools
+
+**PREVIOUS: Enhanced Historical Data Search + Dev Environment (Feb 9, 2026 - Late Night)**
 
 **NEW Features Added:**
 1. ✅ **Real Historical Data Search** - FranchiseResearcher now searches actual web sources:

@@ -14,9 +14,9 @@ Upload this file along with the project zip to resume work seamlessly.
 **Status:** ✅ Production Ready - Professionally Structured & Fully Tested
 **Tests:** 10/10 Passing (includes validation + integrity tests)
 **Integrity Check:** 0 errors, 12 intentional warnings (68% improvement)
-**Latest Commit:** (uncommitted) - Enhanced historical data search + dev environment improvements
-**Previous Commits:** 767d464, 78d2aa7, 7a1ae45, 25de145, e54665c
-**Date Updated:** February 9, 2026 (Late Night - Enhanced)
+**Latest Commit:** 71a718b - Add data source URL tracking and flexible provider display
+**Previous Commits:** d7c0f94, 767d464, 78d2aa7, 7a1ae45, 25de145
+**Date Updated:** February 10, 2026 (Early Morning)
 **GitHub:** github.com/cuchaga/provider-research-system
 
 ### What It Does
@@ -25,6 +25,8 @@ An LLM-enhanced healthcare provider research system for Claude AI that:
 - Searches databases with rule-based and semantic matching
 - Extracts structured data from unstructured web content (real HTTP + BeautifulSoup)
 - Tracks historical changes (previous names, previous owners, acquisitions)
+- **NEW:** Data source URL tracking - tracks all URLs where provider data was obtained
+- **NEW:** Flexible provider display system with custom field selection
 - **NEW:** Real web search for historical data (Google News, business journals, SEC filings)
 - Searches newspaper archives for ownership transactions
 - Deduplicates with intelligent edge case handling
@@ -152,13 +154,14 @@ provider_research/
 | File | Size | Purpose |
 |------|---------|---------|  
 | `PROJECT_CONTEXT.md` | 15KB | **THIS FILE** - Complete project context |
-| `SESSION_HANDOFF.md` | 12KB | Session handoff summary (what just happened) |
+| `SESSION_HANDOFF.md` | 15KB | Session handoff summary (what just happened) |
 | `QUICK_REFERENCE.md` | 10KB | Quick start for new chats |
 | `DEVELOPMENT.md` | 12KB | Complete developer workflow guide ⭐NEW |
 | `provider-research-skill/README.md` | 18KB | Package documentation and usage guide |
 | `provider-research-skill/docs/architecture/v2-multi-skill.md` | 14KB | Complete v2.0.0 architecture docs |
 | `provider-research-skill/docs/architecture/overview.md` | 18KB | Technical architecture specification |
 | `provider-research-skill/docs/guides/historical-data-search.md` | 15KB | Historical data search feature docs ⭐NEW |
+| `provider-research-skill/docs/guides/url-tracking.md` | 13KB | Data source URL tracking guide ⭐NEW |
 | `provider-research-skill/docs/guides/getting-started.md` | 8KB | Getting started with venv setup |
 | `provider-research-skill/INTEGRITY_TEST_RESULTS.md` | 8KB | File & import integrity test results |
 
@@ -186,11 +189,12 @@ provider_research/
 ## DATABASE STATE
 
 ### Current Test Data
-**Status:** Database currently empty (cleaned for testing)
-**Previous Test Data:** 6 Home Instead franchises in Greater Boston area
-- Can be re-imported using `add_home_instead_boston.py`
+**Status:** 2 test providers in database
+1. Home Instead Senior Care - Test Location (Boston, MA) - With data source URLs
+2. Home Instead Senior Care - URL Test (Boston, MA) - URL tracking test
 
 **Available Import Data:**
+6 Home Instead franchises in Greater Boston area can be imported using `add_home_instead_boston.py`:
 1. Home Instead Senior Care of Boston (Downtown Boston)
 2. Home Instead - Metrowest (Wellesley)
 3. Home Instead Senior Care of Cambridge & Somerville
@@ -201,11 +205,15 @@ provider_research/
 ### Database Schema (PostgreSQL)
 ```sql
 -- Main tables
-providers (id, npi, legal_name, dba_names, address_*, phone, parent_organization, ...)
-provider_history (id, provider_id, change_type, field_name, old_value, new_value, effective_date, source, ...)
+providers (id, npi, legal_name, dba_names, address_*, phone, parent_organization, data_source_urls, ...)
+provider_history (id, provider_id, change_type, field_name, old_value, new_value, effective_date, source, source_url, ...)
 search_history (id, provider_id, search_query, match_found, match_method, ...)
 research_sessions (id, provider_name, state, status, token_cost, ...)
 ```
+
+**New Fields (v2.0.0):**
+- `data_source_urls TEXT[]` - Array of URLs where provider data was obtained
+- Tracks all web searches, news articles, SEC filings, business journals used for research
 
 ---
 
