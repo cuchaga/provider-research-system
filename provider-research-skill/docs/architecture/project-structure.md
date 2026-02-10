@@ -154,10 +154,10 @@ Old flat structure has been reorganized:
 | `provider_database_sqlite.py` | `provider_research/database/sqlite.py` |
 | `provider_search.py` | `provider_research/search/provider_search.py` |
 | `provider_web_researcher.py` | `provider_research/search/web_researcher.py` |
-| `enrich_and_deduplicate.py` | `tools/enrich_and_deduplicate.py` |
-| `setup_postgres_schema.py` | `tools/setup_postgres_schema.py` |
-| `import_to_postgres.py` | `tools/import_to_postgres.py` |
-| `search_postgres.py` | `tools/search_postgres.py` |
+| `enrich_and_deduplicate.py` | `tools/data/enrich_and_deduplicate.py` |
+| `setup_postgres_schema.py` | `tools/database/setup_postgres_schema.py` |
+| `import_to_postgres.py` | `tools/database/import_to_postgres.py` |
+| `search_postgres.py` | `tools/database/search_postgres.py` |
 
 **Note:** The main `provider_research/__init__.py` maintains backward compatibility, so existing imports should continue to work.
 

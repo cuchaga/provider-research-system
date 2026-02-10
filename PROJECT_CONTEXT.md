@@ -160,7 +160,7 @@ provider_research/
 | `__init__.py` | Package exports |
 | `.gitignore` | Git exclusions |
 | `LICENSE` | MIT License |
-| `scripts/init_database.sh` | Database setup script |
+| `scripts/setup_postgres.sh` | Database setup script |
 
 ### Diagrams
 | File | Purpose |
@@ -375,7 +375,7 @@ sudo service postgresql start
 python3 test_provider_research_llm.py
 
 # Initialize database (if needed)
-bash scripts/init_database.sh
+bash scripts/setup_postgres.sh
 ```
 
 ### Option 3: Key Code Locations
@@ -430,7 +430,7 @@ bash scripts/init_database.sh
 - **`provider-research-skill/docs/architecture/v2-multi-skill.md` (14KB)** - Complete architecture documentation
 - **`SESSION_HANDOFF.md` (NEW)** - Context preservation for new chat sessions
 - **`provider-research-skill/README.md` (updated)** - v2.0.0 usage guide
-- **`provider-research-skill/__init__.py` (updated)** - Exports for v2.0.0
+- **`provider_research/__init__.py` (updated)** - Exports for v2.0.0
 
 #### Git Status
 - **Commit:** `bb69e06` - "Implement multi-skill architecture with orchestrator"

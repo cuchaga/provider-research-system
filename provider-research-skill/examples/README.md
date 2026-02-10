@@ -10,9 +10,6 @@ This directory contains example code demonstrating how to use the Provider Resea
 ### Advanced Examples
 - **[advanced_orchestration.py](advanced_orchestration.py)** - Complex multi-step workflows
 
-### Jupyter Notebooks
-- **[notebooks/quick_start.ipynb](notebooks/quick_start.ipynb)** - Interactive quick start guide
-
 ## Running Examples
 
 ### Python Scripts

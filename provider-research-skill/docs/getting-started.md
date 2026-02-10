@@ -84,7 +84,7 @@ for provider in result.providers:
 
 ### Database Configuration
 
-Create `config/database/sqlite.yml`:
+Create `config/database/sqlite.yml` (see `config/database/sqlite.example.yml` for template):
 
 ```yaml
 database:
@@ -93,7 +93,7 @@ database:
     path: data/providers.db
 ```
 
-Or `config/database/postgres.yml`:
+Or `config/database/postgres.yml` (see `config/database/postgres.example.yml` for template):
 
 ```yaml
 database:
@@ -122,7 +122,6 @@ export OPENAI_API_KEY=your_key
 
 - [Read the Architecture Overview](architecture/overview.md)
 - [Explore Example Code](../examples/)
-- [Learn about the API](api/orchestrator.md)
 - [Set up PostgreSQL](guides/database-setup.md)
 
 ## Common Issues
@@ -144,5 +143,3 @@ Verify your API key is set correctly:
 ```bash
 echo $ANTHROPIC_API_KEY
 ```
-
-For more help, see [Troubleshooting Guide](guides/troubleshooting.md).
